@@ -95,8 +95,14 @@ export default function HistoriasPage() {
 
   // 2. Resaltador
   const resaltarPalabras = (textoIngles: string) => {
-    if (palabrasEnAnki.length === 0) return textoIngles;
-    let textoResaltado = textoIngles;
+    // Escapar entidades HTML crudas para evitar ataques XSS
+    let textoResaltado = textoIngles
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+    if (palabrasEnAnki.length === 0) return textoResaltado;
+
     const palabrasOrdenadas = [...palabrasEnAnki].sort(
       (a, b) => b.length - a.length,
     );
@@ -412,6 +418,9 @@ export default function HistoriasPage() {
             <option value="B1">B1 - Intermedio</option>
             <option value="B2">B2 - Intermedio Alto</option>
             <option value="C1">C1 - Avanzado</option>
+            <option value="C2 / Nativo">
+              C2 - Nativo (Jerga y Expr. Idiomáticas)
+            </option>
           </select>
           <button
             className="new-chat-btn btn-compact"
