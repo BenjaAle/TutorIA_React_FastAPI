@@ -1,6 +1,10 @@
 # Environments
 .env
 
+# Credenciales Privadas
+credenciales_firebase.json
+backend/credenciales_firebase.json
+
 # Python
 __pycache__/
 *.py[cod]

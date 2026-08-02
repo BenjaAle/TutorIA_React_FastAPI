@@ -295,3 +295,19 @@ button.send-btn:hover {
 .confirm-btn:hover {
   background: #2980b9;
 }
+
+/* --- MOBILE PWA RESPONSIVENESS --- */
+@media screen and (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    margin: 10px;
+    max-height: 90vh;
+    padding: 15px;
+  }
+  .grid-edit {
+    grid-template-columns: 1fr;
+  }
+  .field-group.full-width {
+    grid-column: span 1;
+  }
+}

@@ -189,3 +189,17 @@
   background: #e74c3c;
   color: white;
 }
+
+/* --- MOBILE PWA RESPONSIVENESS --- */
+@media screen and (max-width: 768px) {
+  .fonetica-grid {
+    grid-template-columns: 1fr 1fr; /* Dos fonemas por fila para mejor uso */
+    gap: 10px;
+  }
+  .gym-container {
+    padding: 15px;
+  }
+  .gym-btn {
+    width: 100%;
+  }
+}

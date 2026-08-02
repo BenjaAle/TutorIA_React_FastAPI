@@ -23,7 +23,8 @@ function ChatRouteSync({
   onSelectChat,
 }: {
   onSelectChat: (chatId: number | null) => void;
-}) { // creo directamente la interfaz de ChatRouteSync
+}) {
+  // creo directamente la interfaz de ChatRouteSync
   const navigate = useNavigate(); // Hook que permite navegar entre páginas
   const { chatId } = useParams(); // Hook que permite obtener los parámetros de la URL (lo guarda en chatId)
 
@@ -45,46 +46,88 @@ function ChatRouteSync({
   return null; // Componente que no renderiza nada, solo sincroniza el estado del chat con la URL
 }
 
+import type { User } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./firebase";
+import { Login } from "./components/Login";
+
+// Interceptar fetch GLOBAL para enviar token en Headers siempre
+const originalFetch = window.fetch;
+window.fetch = async (...args) => {
+  const [resource, config] = args;
+  const token = await auth.currentUser?.getIdToken();
+  if (token) {
+    if (config) {
+      config.headers = {
+        ...config.headers,
+        Authorization: `Bearer ${token}`,
+      };
+    } else {
+      args[1] = { headers: { Authorization: `Bearer ${token}` } };
+    }
+  }
+  return originalFetch(...args);
+};
+
 function App() {
-  // selectedChatId parte siendo null o el id del chat seleccionado, solo que al entregarlo "como una función",
-  // se le entregan unas instrucciones para tomar la decisión de que valor inicial tomar.
-  // - El return manda: lo que entregue el return, es lo que es el valor inicial
-  // si quisiera que retornara una funcion, seria: 
-  /*
-  const [miCalculadora, setMiCalculadora] = useState(() => {
-    // React va a ejecutar esta capa externa y se va a guardar lo que la flecha verde esté apuntando
-    return (a: number, b: number) => {
-        return a + b;
-    };
-  });*/
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Authentication observer
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const [selectedChatId, setSelectedChatId] = useState<number | null>(() => {
-    const storedChatId = window.localStorage.getItem(CHAT_STORAGE_KEY); // Obtiene el id del chat seleccionado de la variable CHAT_STORAGE_KEY
-
-    if (!storedChatId) return null; // Si no hay id del chat seleccionado, devuelve null
-
-    const parsedChatId = Number(storedChatId); // Convierte el id del chat seleccionado a número
-    return Number.isNaN(parsedChatId) ? null : parsedChatId; // Si el id del chat seleccionado no es un número, devuelve null
+    const storedChatId = window.localStorage.getItem(CHAT_STORAGE_KEY);
+    if (!storedChatId) return null;
+    const parsedChatId = Number(storedChatId);
+    return Number.isNaN(parsedChatId) ? null : parsedChatId;
   });
 
   useEffect(() => {
     if (selectedChatId === null) {
-      window.localStorage.removeItem(CHAT_STORAGE_KEY); // Elimina el id del chat seleccionado de la variable CHAT_STORAGE_KEY
+      window.localStorage.removeItem(CHAT_STORAGE_KEY);
       return;
     }
+    window.localStorage.setItem(CHAT_STORAGE_KEY, String(selectedChatId));
+  }, [selectedChatId]);
 
-    window.localStorage.setItem(CHAT_STORAGE_KEY, String(selectedChatId)); // Guarda el id del chat seleccionado en la variable CHAT_STORAGE_KEY
-  }, [selectedChatId]); // Se ejecuta cuando el id del chat seleccionado cambia
+  if (loading) {
+    return (
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#1a1a1a",
+          color: "white",
+        }}
+      >
+        <h2>Cargando...</h2>
+      </div>
+    );
+  }
+
+  // Auth Guard
+  if (!user) {
+    return <Login />;
+  }
 
   const MainLayout = ({ children }: { children: React.ReactNode }) => (
     <div className="app-container">
       <Sidebar
         selectedChatId={selectedChatId}
-
         // Aqui le paso la funcion setSelectedChatId al Sidebar para que pueda seleccionar un chat
         // Se lo paso como prop (le estoy pasando los 2 elementos que pide el props del componente Sidebar)
         onSelectChat={setSelectedChatId}
       />
-      
+
       {children}
     </div>
   );

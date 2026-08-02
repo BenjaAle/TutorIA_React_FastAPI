@@ -6,9 +6,14 @@ import base64  # Codificar imagenes y audios para Anki
 import re
 import requests  # Para consumir la API de Pexels
 import sqlite3
+import firebase_admin
+from firebase_admin import credentials, auth as firebase_auth
 
 # pyrefly: ignore [missing-import]
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends, HTTPException, status
+
+# pyrefly: ignore [missing-import]
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 # pyrefly: ignore [missing-import]
 from fastapi.staticfiles import StaticFiles  # Para que la web lea estaticos js y css
@@ -57,6 +62,26 @@ if not api_key_gemini or not api_key_pexels:
     )
 
 client = genai.Client(api_key=api_key_gemini)
+
+# ==========================================
+# INICIALIZACIÓN DE FIREBASE ADMIN
+# ==========================================
+cred = credentials.Certificate("credenciales_firebase.json")
+firebase_admin.initialize_app(cred)
+
+security = HTTPBearer()
+
+
+def get_current_user(cred: HTTPAuthorizationCredentials = Depends(security)):
+    try:
+        decoded_token = firebase_auth.verify_id_token(cred.credentials)
+        return decoded_token.get("email") or decoded_token.get("uid")
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credenciales invalidas o expiradas",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 VOCAL_TTS = "en-US-AvaNeural"
@@ -123,11 +148,27 @@ def iniciar_bd():
         pass  # Si la columna ya existe, simplemente ignora el error
 
     # Tabla para destacar las palabras extraidas de las historias.
+    # NOTA: En la migración multiusuario, omitimos la palabra como UNIQUE universal y la atamos al usuario luego.
     c.execute(
         """CREATE TABLE IF NOT EXISTS vocabulario_anki (
                     palabra TEXT UNIQUE COLLATE NOCASE
                 )"""
     )
+
+    # ==============================================================
+    # MIGRACIÓN MULTIUSUARIO: Agregar user_id a todas las tablas base
+    # ==============================================================
+    try:
+        c.execute("ALTER TABLE chats ADD COLUMN user_id TEXT")
+        c.execute("ALTER TABLE mensajes ADD COLUMN user_id TEXT")
+        c.execute("ALTER TABLE historias ADD COLUMN user_id TEXT")
+        c.execute("ALTER TABLE vocabulario_anki ADD COLUMN user_id TEXT")
+        # Por defecto, marcamos chats pasados al primer que se loguee o lo dejamos generico
+        c.execute("UPDATE chats SET user_id = 'migrado' WHERE user_id IS NULL")
+        c.execute("UPDATE mensajes SET user_id = 'migrado' WHERE user_id IS NULL")
+        c.execute("UPDATE historias SET user_id = 'migrado' WHERE user_id IS NULL")
+    except sqlite3.OperationalError:
+        pass
 
     conn.commit()
     conn.close()
@@ -185,14 +226,14 @@ def invoke_anki(action, **params):
 
 # 1. Crear un chat nuevo
 @app.post("/crear_chat")
-def crear_chat(datos: NuevoChat):
+def crear_chat(datos: NuevoChat, user_id: str = Depends(get_current_user)):
     conn = sqlite3.connect("tutor.db")
     c = conn.cursor()
 
-    # Consulta parametrizada para evitar inyecciones SQL
-    c.execute("INSERT INTO chats (titulo) VALUES (?)", (datos.titulo,))
+    c.execute(
+        "INSERT INTO chats (titulo, user_id) VALUES (?, ?)", (datos.titulo, user_id)
+    )
 
-    # Obtener el ID del chat recién creado
     chat_id = c.lastrowid
     conn.commit()
     conn.close()
@@ -201,12 +242,13 @@ def crear_chat(datos: NuevoChat):
 
 # 2. Obtener la lista de chats para la barra lateral
 @app.get("/chats")
-def obtener_chats():
+def obtener_chats(user_id: str = Depends(get_current_user)):
     conn = sqlite3.connect("tutor.db")
     c = conn.cursor()
-    c.execute("SELECT id, titulo FROM chats ORDER BY id DESC")
+    c.execute(
+        "SELECT id, titulo FROM chats WHERE user_id = ? ORDER BY id DESC", (user_id,)
+    )
 
-    # Ejemplo: [{"id": 1, "titulo": "Chat 1"}, {"id": 2, "titulo": "Chat 2"}]
     chats = [{"id": row[0], "titulo": row[1]} for row in c.fetchall()]
     conn.close()
     return chats
@@ -214,12 +256,16 @@ def obtener_chats():
 
 # 3. Renombrar un chat existente
 @app.put("/chats/{chat_id}")
-def renombrar_chat(chat_id: int, req: RenombrarRequest):
+def renombrar_chat(
+    chat_id: int, req: RenombrarRequest, user_id: str = Depends(get_current_user)
+):
     conn = sqlite3.connect("tutor.db")
     c = conn.cursor()
 
-    # (req.titulo, chat_id) va dentro
-    c.execute("UPDATE chats SET titulo = ? WHERE id = ?", (req.titulo, chat_id))
+    c.execute(
+        "UPDATE chats SET titulo = ? WHERE id = ? AND user_id = ?",
+        (req.titulo, chat_id, user_id),
+    )
     conn.commit()
     conn.close()
     return {"mensaje": "Renombrado exitosamente"}
@@ -227,11 +273,13 @@ def renombrar_chat(chat_id: int, req: RenombrarRequest):
 
 # 4. Eliminar un chat y sus mensajes.
 @app.delete("/chats/{chat_id}")
-def eliminar_chat(chat_id: int):
+def eliminar_chat(chat_id: int, user_id: str = Depends(get_current_user)):
     conn = sqlite3.connect("tutor.db")
     c = conn.cursor()
-    c.execute("DELETE FROM chats WHERE id = ?", (chat_id,))
-    c.execute("DELETE FROM mensajes WHERE chat_id = ?", (chat_id,))
+    c.execute("DELETE FROM chats WHERE id = ? AND user_id = ?", (chat_id, user_id))
+    c.execute(
+        "DELETE FROM mensajes WHERE chat_id = ? AND user_id = ?", (chat_id, user_id)
+    )
     conn.commit()
     conn.close()
     return {"mensaje": "Eliminado exitosamente"}
@@ -239,14 +287,14 @@ def eliminar_chat(chat_id: int):
 
 # 5. Obtener los mensajes antiguos de un chat específico
 @app.get("/chats/{chat_id}/mensajes")
-def obtener_mensajes(chat_id: int):
+def obtener_mensajes(chat_id: int, user_id: str = Depends(get_current_user)):
     conn = sqlite3.connect("tutor.db")
     c = conn.cursor()
     c.execute(
-        "SELECT rol, texto FROM mensajes WHERE chat_id = ? ORDER BY id ASC", (chat_id,)
+        "SELECT rol, texto FROM mensajes WHERE chat_id = ? AND user_id = ? ORDER BY id ASC",
+        (chat_id, user_id),
     )
 
-    # fetchall() devuelve la lista de tuplas (rol, texto)
     mensajes = [{"rol": row[0], "texto": row[1]} for row in c.fetchall()]
     conn.close()
     return mensajes
@@ -254,15 +302,15 @@ def obtener_mensajes(chat_id: int):
 
 # 6. El motor de conversación con memoria
 @app.post("/chat")
-def conversar(mensaje: Mensaje):
+def conversar(mensaje: Mensaje, user_id: str = Depends(get_current_user)):
     try:
         conn = sqlite3.connect("tutor.db")
         c = conn.cursor()
 
         # A) Guardamos lo que dijo el usuario
         c.execute(
-            "INSERT INTO mensajes (chat_id, rol, texto) VALUES (?, ?, ?)",
-            (mensaje.chat_id, "user", mensaje.texto),
+            "INSERT INTO mensajes (chat_id, rol, texto, user_id) VALUES (?, ?, ?, ?)",
+            (mensaje.chat_id, "user", mensaje.texto, user_id),
         )
         conn.commit()
 
@@ -317,12 +365,12 @@ def conversar(mensaje: Mensaje):
 
 # 7. Generar propuestas de cartas
 @app.post("/proponer_cartas")
-def proponer_cartas(req: ExtraerRequest):
+def proponer_cartas(req: ExtraerRequest, user_id: str = Depends(get_current_user)):
     conn = sqlite3.connect("tutor.db")
     c = conn.cursor()
     c.execute(
-        "SELECT rol, texto FROM mensajes WHERE chat_id = ? AND extraido = 0 ORDER BY id ASC",
-        (req.chat_id,),
+        "SELECT rol, texto FROM mensajes WHERE chat_id = ? AND extraido = 0 AND user_id = ? ORDER BY id ASC",
+        (req.chat_id, user_id),
     )
     historial_bd = c.fetchall()
     conn.close()
@@ -418,7 +466,9 @@ def proponer_cartas(req: ExtraerRequest):
 
 # 8. Toma las cartas propuestas y las inyecta a Anki, generando audios e imágenes en paralelo
 @app.post("/inyectar_cartas")
-async def inyectar_cartas(req: InyectarRequest):
+async def inyectar_cartas(
+    req: InyectarRequest, user_id: str = Depends(get_current_user)
+):
     try:
         if not req.cartas:
             return {"mensaje": "🤷‍♂️ No se enviaron cartas para inyectar."}
@@ -715,8 +765,8 @@ async def inyectar_cartas(req: InyectarRequest):
         conn = sqlite3.connect("tutor.db")
         c = conn.cursor()
         c.execute(
-            "UPDATE mensajes SET extraido = 1 WHERE chat_id = ? AND extraido = 0",
-            (req.chat_id,),
+            "UPDATE mensajes SET extraido = 1 WHERE chat_id = ? AND extraido = 0 AND user_id = ?",
+            (req.chat_id, user_id),
         )
         conn.commit()
         conn.close()
@@ -729,7 +779,9 @@ async def inyectar_cartas(req: InyectarRequest):
 
 # 9. Ruta de historias
 @app.post("/generar_historia")
-async def generar_historia(req: NuevaHistoria):
+async def generar_historia(
+    req: NuevaHistoria, user_id: str = Depends(get_current_user)
+):
     instrucciones_maestras = f"""
     Eres un experto profesor de inglés. Tu ÚNICA función es crear una historia interesante en inglés basándote en la temática del usuario, con nivel '{req.nivel}'.
     
@@ -778,8 +830,8 @@ async def generar_historia(req: NuevaHistoria):
         conn = sqlite3.connect("tutor.db")
         c = conn.cursor()
         c.execute(
-            "INSERT INTO historias (titulo, tematica) VALUES (?, ?)",
-            (titulo, req.tematica),
+            "INSERT INTO historias (titulo, tematica, user_id) VALUES (?, ?, ?)",
+            (titulo, req.tematica, user_id),
         )
         # Obtener el ID de la historia recién creada
         historia_id = c.lastrowid
@@ -835,9 +887,19 @@ async def generar_historia(req: NuevaHistoria):
 
 # 2. Obtiene las líneas y audios de una historia específica
 @app.get("/api/historias/{historia_id}")
-def obtener_detalles_historia(historia_id: int):
+def obtener_detalles_historia(
+    historia_id: int, user_id: str = Depends(get_current_user)
+):
     conn = sqlite3.connect("tutor.db")
     c = conn.cursor()
+
+    c.execute(
+        "SELECT id FROM historias WHERE id = ? AND user_id = ?", (historia_id, user_id)
+    )
+    if not c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=403, detail="Acceso denegado")
+
     c.execute(
         "SELECT orden, oracion_en, oracion_es, ruta_audio, oracion_ipa FROM lineas_historia WHERE historia_id = ? ORDER BY orden ASC",
         (historia_id,),
@@ -859,9 +921,16 @@ def obtener_detalles_historia(historia_id: int):
 
 # ELIMINAR HISTORIA
 @app.delete("/api/historias/{historia_id}")
-def eliminar_historia(historia_id: int):
+def eliminar_historia(historia_id: int, user_id: str = Depends(get_current_user)):
     conn = sqlite3.connect("tutor.db")
     c = conn.cursor()
+
+    c.execute(
+        "SELECT id FROM historias WHERE id = ? AND user_id = ?", (historia_id, user_id)
+    )
+    if not c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=403, detail="Acceso denegado")
 
     # Recuperar rutas de audio antes de borrar las filas
     c.execute(
@@ -901,11 +970,12 @@ def eliminar_historia(historia_id: int):
 
 # 3. Obtener la lista de historias creadas para la barra lateral
 @app.get("/api/lista_historias")
-def obtener_lista_historias():
+def obtener_lista_historias(user_id: str = Depends(get_current_user)):
     conn = sqlite3.connect("tutor.db")
     c = conn.cursor()
     c.execute(
-        "SELECT id, titulo, COALESCE(fijada, 0) FROM historias ORDER BY COALESCE(fijada, 0) DESC, id DESC"
+        "SELECT id, titulo, COALESCE(fijada, 0) FROM historias WHERE user_id = ? ORDER BY COALESCE(fijada, 0) DESC, id DESC",
+        (user_id,),
     )
     historias = [
         {"id": row[0], "titulo": row[1], "fijada": bool(row[2])} for row in c.fetchall()
@@ -916,10 +986,15 @@ def obtener_lista_historias():
 
 # 3a. Renombrar una historia existente
 @app.put("/api/historias/{historia_id}")
-def renombrar_historia(historia_id: int, req: RenombrarRequest):
+def renombrar_historia(
+    historia_id: int, req: RenombrarRequest, user_id: str = Depends(get_current_user)
+):
     conn = sqlite3.connect("tutor.db")
     c = conn.cursor()
-    c.execute("UPDATE historias SET titulo = ? WHERE id = ?", (req.titulo, historia_id))
+    c.execute(
+        "UPDATE historias SET titulo = ? WHERE id = ? AND user_id = ?",
+        (req.titulo, historia_id, user_id),
+    )
     conn.commit()
     conn.close()
     return {"mensaje": "Historia renombrada exitosamente"}
@@ -927,12 +1002,12 @@ def renombrar_historia(historia_id: int, req: RenombrarRequest):
 
 # 3b. Fijar / Desfijar una historia
 @app.put("/api/historias/{historia_id}/fijar")
-def fijar_historia(historia_id: int):
+def fijar_historia(historia_id: int, user_id: str = Depends(get_current_user)):
     conn = sqlite3.connect("tutor.db")
     c = conn.cursor()
     c.execute(
-        "UPDATE historias SET fijada = NOT COALESCE(fijada, 0) WHERE id = ?",
-        (historia_id,),
+        "UPDATE historias SET fijada = NOT COALESCE(fijada, 0) WHERE id = ? AND user_id = ?",
+        (historia_id, user_id),
     )
     conn.commit()
     conn.close()
@@ -941,7 +1016,9 @@ def fijar_historia(historia_id: int):
 
 # 4. Proponer una carta única para un término específico
 @app.post("/proponer_carta_unica")
-def proponer_carta_unica(req: CartaUnicaRequest):
+def proponer_carta_unica(
+    req: CartaUnicaRequest, user_id: str = Depends(get_current_user)
+):
     instrucciones = """
     Eres un creador de flashcards experto. El alumno no conoce un término en inglés y necesita UNA SOLA flashcard perfecta para este término.
     Debes escribir su traducción al español y explicar su significado dentro del contexto específico provisto.
@@ -1552,7 +1629,9 @@ def obtener_connected_speech():
 
 # 3. Gimnasio
 @app.post("/api/entrenar_pares")
-async def entrenar_pares(req: EntrenamientoPares):
+async def entrenar_pares(
+    req: EntrenamientoPares, user_id: str = Depends(get_current_user)
+):
     prompt = f"""
     Eres un experto en fonética inglesa. El alumno hispanohablante confunde los fonemas {req.fonema_1} y {req.fonema_2}.
     Genera EXACTAMENTE 4 pares mínimos que contrasten ambos sonidos. 
@@ -1617,12 +1696,12 @@ async def entrenar_pares(req: EntrenamientoPares):
 
 
 @app.get("/api/vocabulario")
-async def obtener_vocabulario():
+async def obtener_vocabulario(user_id: str = Depends(get_current_user)):
     conn = sqlite3.connect("tutor.db")
     c = conn.cursor()
 
     # Devolver palabras guardadas
-    c.execute("SELECT palabra FROM vocabulario_anki")
+    c.execute("SELECT palabra FROM vocabulario_anki WHERE user_id = ?", (user_id,))
     palabras = [fila[0] for fila in c.fetchall()]
     conn.close()
 
@@ -1631,7 +1710,9 @@ async def obtener_vocabulario():
 
 
 @app.post("/api/vocabulario")
-async def guardar_vocabulario(request: Request):
+async def guardar_vocabulario(
+    request: Request, user_id: str = Depends(get_current_user)
+):
     conn = sqlite3.connect("tutor.db")
     c = conn.cursor()
 
@@ -1649,7 +1730,8 @@ async def guardar_vocabulario(request: Request):
         if isinstance(p, str) and p.strip():
             try:
                 c.execute(
-                    "INSERT INTO vocabulario_anki (palabra) VALUES (?)", (p.strip(),)
+                    "INSERT INTO vocabulario_anki (palabra, user_id) VALUES (?, ?)",
+                    (p.strip(), user_id),
                 )
             except sqlite3.IntegrityError:
                 pass  # Si la palabra ya existe, se ignora
