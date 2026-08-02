@@ -1,0 +1,32 @@
+# Environments
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Databases
+*.db
+*.sqlite3
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Historia manual y audios
+backend/static/historia_manual/historia_manual.json
+backend/static/historia_manual/texto_crudo.txt
+backend/static/audios/
+
+# Antiguos
+antiguo/

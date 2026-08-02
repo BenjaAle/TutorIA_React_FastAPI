@@ -1,0 +1,344 @@
+.library-title {
+  margin-top: 30px;
+  font-size: 14px;
+}
+
+.story-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.story-label {
+  font-size: 12px;
+  color: #cbd5e1;
+}
+
+.story-textarea {
+  padding: 8px;
+  border-radius: 5px;
+  border: none;
+  resize: none;
+  font-family: inherit;
+}
+
+.story-difficulty-select {
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #e2e8f0;
+  background-color: white;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.btn-compact {
+  margin-bottom: 0;
+}
+
+.story-list {
+  margin-top: 10px;
+}
+
+.story-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid transparent;
+  transition: 0.2s;
+}
+
+.story-list-item.active {
+  background: #eff6ff;
+  border-left: 4px solid #3b82f6;
+}
+
+.story-list-item.active .story-list-title {
+  color: #1d4ed8;
+}
+
+.story-list-title {
+  cursor: pointer;
+  flex-grow: 1;
+  font-weight: bold;
+  color: #1e293b;
+}
+
+.story-delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 5px;
+  transition: 0.2s;
+}
+
+.story-delete-btn:hover {
+  transform: scale(1.2);
+}
+
+.story-edit-input {
+  flex: 1;
+  padding: 4px;
+  font-size: 14px;
+  border-radius: 3px;
+  border: none;
+  outline: none;
+}
+
+.story-list-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  flex-grow: 1;
+  font-weight: bold;
+  color: #1e293b;
+}
+
+.story-options-menu {
+  position: relative;
+}
+
+.story-options-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #64748b;
+  padding: 0 8px;
+}
+
+.story-dropdown-content {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 135px;
+  overflow: hidden;
+}
+
+.story-dropdown-item {
+  padding: 10px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.story-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.story-dropdown-item.danger {
+  color: #e74c3c;
+}
+
+.historias-chat-container {
+  padding: 20px;
+  overflow-y: auto;
+  background: #fafafa;
+}
+
+.historias-header {
+  border-radius: 8px;
+  margin-bottom: 20px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 15px;
+}
+
+.historias-header-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.historias-header-title {
+  flex: 1;
+  margin: 0;
+}
+
+.historias-header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.story-loading-text {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.speed-select {
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #cbd5e1;
+  outline: none;
+  cursor: pointer;
+}
+
+.story-audio-player {
+  width: 100%;
+  height: 40px;
+  border-radius: 5px;
+  display: none;
+  outline: none;
+}
+
+.story-empty-state {
+  text-align: center;
+  color: #94a3b8;
+  margin-top: 50px;
+}
+
+.floating-anki-btn {
+  /* display controlled by React conditional rendering */
+  position: fixed;
+  z-index: 1000;
+  background: #27ae60;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.1s;
+}
+
+.story-controls {
+  display: flex;
+  gap: 10px;
+  background: #f8fafc;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.story-board {
+  overflow-y: auto;
+  flex: 1;
+  padding: 20px;
+}
+
+/* Estilos específicos para el reproductor de historias */
+.mode-btn {
+  flex: 1;
+  padding: 10px;
+  border: 2px solid #cbd5e1;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #475569;
+  transition: 0.2s;
+}
+
+.mode-btn.active {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.mode-subtitle {
+  font-size: 11px;
+  font-weight: normal;
+}
+
+.story-line {
+  padding: 10px; /* ESTE REGULA EL TAMAÑO DE LA CAJITA DE LAS FRASES DE LAS HISTORIAS */
+  border-radius: 8px;
+  margin-bottom: 10px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  transition: 0.3s;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.story-line-content {
+  grid-area: 1/1;
+  display: flex;
+  flex-direction: column;
+}
+
+.story-translations-container {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.story-translation-layer {
+  grid-area: 1/1;
+}
+
+.story-immersion-overlay {
+  grid-area: 1/1;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-style: italic;
+  pointer-events: none;
+}
+
+.story-line.playing {
+  border-left: 5px solid #27ae60;
+  background: #f0fdf4;
+}
+
+.text-en {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1e293b;
+  margin-bottom: 5px;
+}
+
+.text-es {
+  font-size: 15px;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* La visibilidad se controla por React en línea para prevenir colapso de las cajas */
+.text-ipa {
+  font-size: 17px;
+  color: #8e44ad;
+  margin-bottom: 5px;
+  font-family: monospace;
+}
+
+/* Estilo para las palabras ya inyectadas en Anki */
+.anki-highlight {
+  background-color: rgba(255, 235, 59, 0.3); /* Amarillo muy transparente */
+  border-bottom: 2px dashed #fbc02d; /* Subrayado punteado dorado */
+  border-radius: 3px;
+  padding: 0 2px;
+  transition: background-color 0.3s ease;
+}
+
+.anki-highlight:hover {
+  background-color: rgba(
+    255,
+    235,
+    59,
+    0.6
+  ); /* Se oscurece un poco al pasar el mouse */
+}
