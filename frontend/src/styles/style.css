@@ -216,29 +216,81 @@ input:focus {
   overflow: hidden;
 }
 
+/* Elementos Flotantes del Menú Mobile */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100dvh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 990;
+}
+.mobile-menu-btn {
+  display: none;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 1000;
+  background: #1e293b;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+.mobile-menu-btn.hidden {
+  display: none !important;
+}
+
 /* --- MOBILE PWA RESPONSIVENESS --- */
 @media screen and (max-width: 768px) {
+  .mobile-menu-btn {
+    display: block;
+  }
+  .sidebar-overlay {
+    display: block;
+  }
   #root {
-    height: 100dvh; /* Usa dynamic viewport rectificado para iOS/Android */
+    height: 100dvh;
   }
   .app-container {
     flex-direction: column;
     height: 100dvh;
   }
   .sidebar {
-    width: 100%;
-    max-height: 140px; /* Mas bajito para darle espacio a los chats */
+    position: fixed !important;
+    top: 0;
+    left: -100%;
+    width: 300px !important;
+    height: 100dvh !important;
+    max-height: none !important;
+    z-index: 999;
     padding: 10px;
     border-right: none;
-    border-bottom: 2px solid #334155;
+    transition: left 0.3s ease;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+  .chat-list {
+    flex: none !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .sidebar.open {
+    left: 0 !important;
   }
   .sidebar-actions {
     display: flex;
     flex-direction: row;
     gap: 5px;
+    margin-top: 40px; /* Para que no lo tape el boton */
   }
   .sidebar-actions > * {
-    flex: 1; /* Forzamos a los botones a estar uno a la par del otro */
+    flex: 1;
   }
   .new-chat-btn {
     padding: 8px 5px;
@@ -247,9 +299,12 @@ input:focus {
   }
   .chat-page {
     width: 100%;
-    flex: 1; /* Toma el espacio restanto empujando el input abajo */
+    flex: 1;
   }
   .input-area {
     padding: 10px;
+  }
+  .header {
+    padding-left: 100px !important; /* Espacio para el menu burger */
   }
 }

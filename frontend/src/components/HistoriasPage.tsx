@@ -30,6 +30,15 @@ export default function HistoriasPage() {
     "📚 Reproductor de Historias",
   );
 
+  // Mobile toggle state
+  const [isMobileOpen, setIsMobileOpenState] = useState(
+    () => localStorage.getItem("sidebarOpen") === "true",
+  );
+  const setIsMobileOpen = (open: boolean) => {
+    setIsMobileOpenState(open);
+    localStorage.setItem("sidebarOpen", open ? "true" : "false");
+  };
+
   // Dropdown y Edición de Historia
   const [menuActivoId, setMenuActivoId] = useState<number | null>(null);
   const [editandoId, setEditandoId] = useState<number | null>(null);
@@ -383,7 +392,21 @@ export default function HistoriasPage() {
 
   return (
     <div className="app-container">
-      <div className="sidebar historias-sidebar">
+      <button
+        className={`mobile-menu-btn ${isMobileOpen ? "hidden" : ""}`}
+        onClick={() => setIsMobileOpen(true)}
+      >
+        ☰
+      </button>
+      {isMobileOpen && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => setIsMobileOpen(false)}
+        ></div>
+      )}
+      <div
+        className={`sidebar historias-sidebar ${isMobileOpen ? "open" : ""}`}
+      >
         <Link to="/" className="link-reset">
           <button className="new-chat-btn btn-back btn-full">
             ⬅ Volver al Chat
@@ -460,7 +483,10 @@ export default function HistoriasPage() {
               ) : (
                 <span
                   className="story-list-title"
-                  onClick={() => cargarHistoria(h.id)}
+                  onClick={() => {
+                    cargarHistoria(h.id);
+                    setIsMobileOpen(false);
+                  }}
                 >
                   {h.fijada && <span>📌</span>}
                   {h.titulo}

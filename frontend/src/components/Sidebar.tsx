@@ -20,6 +20,15 @@ export default function Sidebar({
   selectedChatId,
   onSelectChat,
 }: SidebarProps) {
+  // Mobile toggle state
+  const [isMobileOpen, setIsMobileOpenState] = useState(
+    () => localStorage.getItem("sidebarOpen") === "true",
+  );
+  const setIsMobileOpen = (open: boolean) => {
+    setIsMobileOpenState(open);
+    localStorage.setItem("sidebarOpen", open ? "true" : "false");
+  };
+
   // Saber si estamos en fonetica o no, para cambiar el Sidebar
   const location = useLocation();
   const isFonetica = location.pathname === "/fonetica";
@@ -107,133 +116,173 @@ export default function Sidebar({
   // 5. Renderizado de lo que se ve en pantalla
   if (isFonetica) {
     return (
-      <div className="sidebar fonetica-sidebar">
-        <div className="sidebar-actions">
-          <Link to="/" className="sidebar-link">
-            <button className="new-chat-btn btn-compact btn-back btn-full">
-              💬 Volver al Chat
-            </button>
-          </Link>
-          <Link to="/historias" className="sidebar-link">
-            <button className="new-chat-btn btn-compact btn-historias btn-full">
-              📚 Ir a Historias
-            </button>
-          </Link>
+      <>
+        <button
+          className={`mobile-menu-btn ${isMobileOpen ? "hidden" : ""}`}
+          onClick={() => setIsMobileOpen(true)}
+        >
+          ☰
+        </button>
+        {isMobileOpen && (
+          <div
+            className="sidebar-overlay"
+            onClick={() => setIsMobileOpen(false)}
+          ></div>
+        )}
+        <div
+          className={`sidebar fonetica-sidebar ${isMobileOpen ? "open" : ""}`}
+        >
+          <div className="sidebar-actions">
+            <Link to="/" className="sidebar-link">
+              <button className="new-chat-btn btn-compact btn-back btn-full">
+                💬 Volver al Chat
+              </button>
+            </Link>
+            <Link to="/historias" className="sidebar-link">
+              <button className="new-chat-btn btn-compact btn-historias btn-full">
+                📚 Ir a Historias
+              </button>
+            </Link>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="sidebar">
-      <div className="sidebar-actions">
-        {/* if: Si no mostramos el formulario, mostramos los botones de nuevo chat, historias, etc */}
-        {!mostrarFormulario ? (
-          <>
-            {/*Pone True para mostrar el formulario del nuevo chat en caso de hacer clic*/}
-            <button
-              className="new-chat-btn btn-compact"
-              onClick={() => setMostrarFormulario(true)}
-            >
-              + Nuevo Chat
-            </button>
-
-            {/* Link reemplaza a las etiquetas <a> para navegar sin recargar la página */}
-            <Link to="/historias" className="sidebar-link">
-              <button className="new-chat-btn btn-compact btn-historias">
-                📚 Historias IA
-              </button>
-            </Link>
-
-            <Link to="/fonetica" className="sidebar-link">
-              <button className="new-chat-btn btn-compact btn-fonetica">
-                🗣️ Fonética
-              </button>
-            </Link>
-          </>
-        ) : (
-          /* Formulario para nuevo chat */
-          <div className="new-chat-form">
-            <input
-              type="text"
-              placeholder="Nombre del chat..."
-              className="new-chat-input"
-              // con cada tecleo, se actualiza el componente y tecnicamente se actualiza todo el sidebar
-              // pero por el virtualDOM, solo se actualiza el input (unica diferencia)
-              value={nuevoTitulo} // inicialmente es ""
-              onChange={(e) => setNuevoTitulo(e.target.value)} // Actualizo nuevoTitulo con cada tecleo
-              onKeyDown={(e) => e.key === "Enter" && crearChat()} // Si presiono Enter, creo el chat
-              autoFocus // Indica que el cursor este dentro del input listo para escribir
-            />
-            <div className="new-chat-actions">
-              <button className="new-chat-action confirm" onClick={crearChat}>
-                Crear
-              </button>
+    <>
+      <button
+        className={`mobile-menu-btn ${isMobileOpen ? "hidden" : ""}`}
+        onClick={() => setIsMobileOpen(true)}
+      >
+        ☰
+      </button>
+      {isMobileOpen && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => setIsMobileOpen(false)}
+        ></div>
+      )}
+      <div className={`sidebar ${isMobileOpen ? "open" : ""}`}>
+        <div className="sidebar-actions">
+          {/* if: Si no mostramos el formulario, mostramos los botones de nuevo chat, historias, etc */}
+          {!mostrarFormulario ? (
+            <>
+              {/*Pone True para mostrar el formulario del nuevo chat en caso de hacer clic*/}
               <button
-                className="new-chat-action cancel"
-                onClick={() => setMostrarFormulario(false)}
+                className="new-chat-btn btn-compact"
+                onClick={() => setMostrarFormulario(true)}
               >
-                Cancelar
+                + Nuevo Chat
               </button>
-            </div>
-          </div>
-        )}
-      </div>
 
-      <div className="chat-list">
-        {/* Recorremos el arreglo de chats y dibujamos un div por cada uno */}
-        {chats.map((chat) => (
-          // key es para identificar cada elemento de la lista y que React no se confunda al redibujar
-          <div
-            key={chat.id}
-            className={`chat-item ${selectedChatId === chat.id ? "active" : ""}`}
-            onClick={() => onSelectChat(chat.id)}
-            role="button" // Indica que el div se comporta como un boton
-            // No hago un boton directamente para no tener un boton dentro de otro boton (eliminar y renombrar)
-            tabIndex={0} // navegable con el tab
-            onKeyDown={(e) => e.key === "Enter" && onSelectChat(chat.id)}
-          >
-            {/* Si estamos editando este chat, mostramos un input, si no, mostramos el título */}
-            {editandoId === chat.id ? (
+              {/* Link reemplaza a las etiquetas <a> para navegar sin recargar la página */}
+              <Link to="/historias" className="sidebar-link">
+                <button className="new-chat-btn btn-compact btn-historias">
+                  📚 Historias IA
+                </button>
+              </Link>
+
+              <Link to="/fonetica" className="sidebar-link">
+                <button className="new-chat-btn btn-compact btn-fonetica">
+                  🗣️ Fonética
+                </button>
+              </Link>
+            </>
+          ) : (
+            /* Formulario para nuevo chat */
+            <div className="new-chat-form">
               <input
                 type="text"
-                value={tituloEditado}
-                onChange={(e) => setTituloEditado(e.target.value)}
-                onBlur={() => guardarEdicion(chat.id)} // Guarda los cambios al clicear fuera del input
-                onKeyDown={(e) => e.key === "Enter" && guardarEdicion(chat.id)}
-                autoFocus
-                className="edit-chat-input"
+                placeholder="Nombre del chat..."
+                className="new-chat-input"
+                // con cada tecleo, se actualiza el componente y tecnicamente se actualiza todo el sidebar
+                // pero por el virtualDOM, solo se actualiza el input (unica diferencia)
+                value={nuevoTitulo} // inicialmente es ""
+                onChange={(e) => setNuevoTitulo(e.target.value)} // Actualizo nuevoTitulo con cada tecleo
+                onKeyDown={(e) => e.key === "Enter" && crearChat()} // Si presiono Enter, creo el chat
+                autoFocus // Indica que el cursor este dentro del input listo para escribir
               />
-            ) : (
-              <span className="chat-item-title">{chat.titulo}</span> //span solo contiene el nombre del chat
-            )}
-
-            <div className="chat-item-actions">
-              <button
-                className="action-btn"
-                title="Renombrar"
-                onClick={(e) => {
-                  e.stopPropagation(); // Evita que se propague el evento al div padre y se seleccione el chat
-                  setEditandoId(chat.id);
-                  setTituloEditado(chat.titulo); // guardo el titulo actual en el input
-                }}
-              >
-                ✏️
-              </button>
-              <button
-                className="action-btn"
-                title="Eliminar"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  eliminarChat(chat.id);
-                }}
-              >
-                🗑️
-              </button>
+              <div className="new-chat-actions">
+                <button className="new-chat-action confirm" onClick={crearChat}>
+                  Crear
+                </button>
+                <button
+                  className="new-chat-action cancel"
+                  onClick={() => setMostrarFormulario(false)}
+                >
+                  Cancelar
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          )}
+        </div>
+
+        <div className="chat-list">
+          {/* Recorremos el arreglo de chats y dibujamos un div por cada uno */}
+          {chats.map((chat) => (
+            // key es para identificar cada elemento de la lista y que React no se confunda al redibujar
+            <div
+              key={chat.id}
+              className={`chat-item ${selectedChatId === chat.id ? "active" : ""}`}
+              onClick={() => {
+                onSelectChat(chat.id);
+                setIsMobileOpen(false);
+              }}
+              role="button" // Indica que el div se comporta como un boton
+              // No hago un boton directamente para no tener un boton dentro de otro boton (eliminar y renombrar)
+              tabIndex={0} // navegable con el tab
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  onSelectChat(chat.id);
+                  setIsMobileOpen(false);
+                }
+              }}
+            >
+              {/* Si estamos editando este chat, mostramos un input, si no, mostramos el título */}
+              {editandoId === chat.id ? (
+                <input
+                  type="text"
+                  value={tituloEditado}
+                  onChange={(e) => setTituloEditado(e.target.value)}
+                  onBlur={() => guardarEdicion(chat.id)} // Guarda los cambios al clicear fuera del input
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && guardarEdicion(chat.id)
+                  }
+                  autoFocus
+                  className="edit-chat-input"
+                />
+              ) : (
+                <span className="chat-item-title">{chat.titulo}</span> //span solo contiene el nombre del chat
+              )}
+
+              <div className="chat-item-actions">
+                <button
+                  className="action-btn"
+                  title="Renombrar"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Evita que se propague el evento al div padre y se seleccione el chat
+                    setEditandoId(chat.id);
+                    setTituloEditado(chat.titulo); // guardo el titulo actual en el input
+                  }}
+                >
+                  ✏️
+                </button>
+                <button
+                  className="action-btn"
+                  title="Eliminar"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    eliminarChat(chat.id);
+                  }}
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

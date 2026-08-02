@@ -345,27 +345,10 @@
 
 /* --- MOBILE PWA RESPONSIVENESS --- */
 @media screen and (max-width: 768px) {
-  .historias-container {
-    flex-direction: column;
-    height: auto !important; /* Permite scroll nativo */
-    overflow: visible !important;
-  }
+  /* Sidebar interna delegada al CSS global */
 
-  /* Sidebar interna */
-  .sidebar {
-    width: 100%;
-    max-height: none !important;
-    border-right: none;
-    border-bottom: 2px solid #334155;
-    padding: 10px;
-  }
-  .sidebar-actions {
-    display: flex;
-    flex-direction: row;
-    gap: 5px;
-  }
-  .sidebar-actions > * {
-    flex: 1;
+  .historias-header-row {
+    padding-left: 90px !important;
   }
   .new-chat-btn {
     padding: 8px 5px !important;
@@ -380,11 +363,5 @@
   .mode-btn {
     width: 100%;
     margin-bottom: 5px;
-  }
-
-  /* Destrabar la caja principal */
-  .story-board {
-    height: auto !important;
-    overflow: visible !important;
   }
 }
