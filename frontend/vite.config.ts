@@ -10,14 +10,15 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       // Todo lo que empiece por /api, /chats, etc. va al backend
-      '/api': 'http://127.0.0.1:8000',
-      '/chats': 'http://127.0.0.1:8000',
-      '/chat': 'http://127.0.0.1:8000',
-      '/crear_chat': 'http://127.0.0.1:8000',
-      '/proponer_cartas': 'http://127.0.0.1:8000',
-      '/inyectar_cartas': 'http://127.0.0.1:8000',
-      '/generar_historia': 'http://127.0.0.1:8000',
-      '/proponer_carta_unica': 'http://127.0.0.1:8000',
+      "/api": "http://127.0.0.1:8000",
+      "/chats": "http://127.0.0.1:8000",
+      "/chat": "http://127.0.0.1:8000",
+      "/crear_chat": "http://127.0.0.1:8000",
+      "/proponer_cartas": "http://127.0.0.1:8000",
+      "/inyectar_cartas": "http://127.0.0.1:8000",
+      "/exportar_apkg": "http://127.0.0.1:8000",
+      "/generar_historia": "http://127.0.0.1:8000",
+      "/proponer_carta_unica": "http://127.0.0.1:8000",
       // Los audios estáticos también se piden al backend
       '/static': 'http://127.0.0.1:8000'
     }

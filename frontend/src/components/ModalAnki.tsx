@@ -157,6 +157,71 @@ export default function ModalAnki({
     }
   };
 
+  const handleExportarAPKG = async () => {
+    if (cartas.length === 0) {
+      alert("No hay cartas para enviar.");
+      return;
+    }
+
+    setInjectedLoading(true);
+
+    try {
+      const res = await fetch("/exportar_apkg", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, cartas: cartas }),
+      });
+
+      if (!res.ok) {
+        alert("Fallo de conexión al exportar.");
+        return;
+      }
+
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const data = await res.json();
+        alert(data.error || data.mensaje || "Error al exportar");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `TutorIA_Mazo.apkg`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+
+      alert("¡Descargado exitosamente! Toca el archivo para importarlo.");
+
+      if (origen === "historia") {
+        try {
+          const palabrasNuevas = cartas.map((c) =>
+            c.frente.replace(/\(.*\)/g, "").trim(),
+          );
+          await fetch("/api/vocabulario", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ palabras: palabrasNuevas }),
+          });
+        } catch (e) {
+          console.error("Error BD", e);
+        }
+      }
+
+      if (onSuccess) {
+        onSuccess(cartas);
+      }
+      onClose();
+    } catch (err) {
+      alert("Error al conectar o descargar el archivo apk.");
+      console.error(err);
+    } finally {
+      setInjectedLoading(false);
+    }
+  };
+
   return (
     <div className="modal">
       <div className="modal-content">
@@ -275,15 +340,39 @@ export default function ModalAnki({
           )}
         </div>
 
-        <div className="modal-footer">
+        <div
+          className="modal-footer"
+          style={{
+            display: "flex",
+            gap: "10px",
+            justifyContent: "space-between",
+          }}
+        >
           <button
             className="confirm-btn"
             onClick={handleConfirmarTodo}
             disabled={injectedLoading || cartas.length === 0}
+            style={{ flex: 1, padding: "10px", minHeight: "50px" }}
           >
             {injectedLoading
-              ? "🚀 Inyectando a Anki..."
-              : "Confirmar e Inyectar a Anki"}
+              ? "🚀 Inyectando..."
+              : "Inyectar al PC (Auto-Sync)"}
+          </button>
+
+          <button
+            className="confirm-btn"
+            onClick={handleExportarAPKG}
+            disabled={injectedLoading || cartas.length === 0}
+            style={{
+              flex: 1,
+              backgroundColor: "#28a745",
+              padding: "10px",
+              minHeight: "50px",
+            }}
+          >
+            {injectedLoading
+              ? "📦 Empacando..."
+              : "Descargar para Móvil (.apkg)"}
           </button>
         </div>
       </div>

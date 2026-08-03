@@ -13,49 +13,89 @@ const KindleSelection = ({
   } | null>(null);
 
   useEffect(() => {
-    const handleMouseUp = (e: MouseEvent) => {
-      // Ignorar clicks dentro del boton flotante
-      if ((e.target as HTMLElement).closest(".floating-anki-btn")) return;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
+    const checkSelection = () => {
       const selection = window.getSelection();
-      const texto = selection?.toString().trim() || "";
-      const lineaCercana = (e.target as HTMLElement).closest(".story-line");
+      if (!selection || selection.rangeCount === 0) {
+        setSeleccion(null);
+        return;
+      }
 
+      const texto = selection.toString().trim();
+
+      // Obtener nodo donde ocurrió la selección
+      const anchorNode = selection.anchorNode;
+      if (!anchorNode || !anchorNode.parentElement) {
+        setSeleccion(null);
+        return;
+      }
+
+      const lineaCercana = anchorNode.parentElement.closest(".story-line");
+
+      // Validar que no sea vacío y esté dentro de una línea de cuento
       if (texto.length > 0 && lineaCercana) {
         const contexto =
           lineaCercana.querySelector(".text-en")?.textContent || "";
-        const range = selection!.getRangeAt(0);
+        const range = selection.getRangeAt(0);
         const rect = range.getBoundingClientRect();
+
+        // Evitar que el botón traspase la botonera superior (menú)
+        const headerControls = document.querySelector(".story-controls");
+        if (headerControls) {
+          const headerRect = headerControls.getBoundingClientRect();
+          // Si el texto seleccionado sube por encima del borde inferior del header, ocultamos
+          if (rect.top < headerRect.bottom) {
+            setSeleccion(null);
+            return;
+          }
+        }
+
         setSeleccion({ palabra: texto, contexto, rect });
       } else {
         setSeleccion(null);
       }
     };
 
-    const hideBtn = () => setSeleccion(null);
+    const handleSelectionChange = () => {
+      // Debounce para evitar sobrecargar a React mientras arrastra el dedo en mobile
+      clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(checkSelection, 50);
+    };
 
-    document.addEventListener("mouseup", handleMouseUp);
-    // true for capture phase to catch internal scroll of story-board
-    window.addEventListener("scroll", hideBtn, true);
-    window.addEventListener("resize", hideBtn);
+    // Usar selectionchange es el único método 100% nativo confiable en iOS/Android
+    document.addEventListener("selectionchange", handleSelectionChange);
+
+    // Al hacer scroll o resize, recalculamos la posicion en lugar de ocultarlo
+    window.addEventListener("scroll", handleSelectionChange, true);
+    window.addEventListener("resize", handleSelectionChange);
 
     return () => {
-      document.removeEventListener("mouseup", handleMouseUp);
-      window.removeEventListener("scroll", hideBtn, true);
-      window.removeEventListener("resize", hideBtn);
+      clearTimeout(timeoutId);
+      document.removeEventListener("selectionchange", handleSelectionChange);
+      window.removeEventListener("scroll", handleSelectionChange, true);
+      window.removeEventListener("resize", handleSelectionChange);
     };
   }, []);
 
   if (!seleccion || !seleccion.rect) return null;
 
+  // Determine if it is a mobile viewport to swap the top/bottom placement to avoid OS native menus
+  const isMobile = typeof window !== "undefined" && window.innerWidth <= 768;
+
   return (
     <div
       className="floating-anki-btn"
       style={{
-        top: `${seleccion.rect.top - 40}px`,
+        top: isMobile
+          ? `${seleccion.rect.bottom + 15}px`
+          : `${seleccion.rect.top - 40}px`,
         left: `${seleccion.rect.left + seleccion.rect.width / 2 - 40}px`,
       }}
-      onMouseDown={(e) => e.stopPropagation()} // Evita que se pierda la selección nativa al darle click
+      onPointerDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
       onClick={(e) => {
         e.stopPropagation();
         onRequestAnki(seleccion.palabra, seleccion.contexto);

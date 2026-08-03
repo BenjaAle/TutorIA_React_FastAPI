@@ -6,24 +6,37 @@ import base64  # Codificar imagenes y audios para Anki
 import re
 import requests  # Para consumir la API de Pexels
 import sqlite3
+
 # pyrefly: ignore [missing-import]
 import firebase_admin
+
 # pyrefly: ignore [missing-import]
 from firebase_admin import credentials, auth as firebase_auth
+
 # pyrefly: ignore [missing-import]
 from fastapi import FastAPI, Request, Depends, HTTPException, status
+
 # pyrefly: ignore [missing-import]
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
 # pyrefly: ignore [missing-import]
 from fastapi.staticfiles import StaticFiles  # Para que la web lea estaticos js y css
+
+# pyrefly: ignore [missing-import]
+from fastapi.responses import FileResponse
+
 # pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
+
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
+
 # pyrefly: ignore [missing-import]
 from google import genai  # Comunicacion con gemini
+
 # pyrefly: ignore [missing-import]
 from google.genai import types  # Memoria de chat
+
 # pyrefly: ignore [missing-import]
 import edge_tts
 from models import (
@@ -36,6 +49,12 @@ from models import (
     NuevaHistoria,
     RenombrarRequest,
 )
+
+import genanki
+import tempfile
+
+# pyrefly: ignore [missing-import]
+from fastapi import BackgroundTasks
 
 # ==========================================
 # CONFIGURACIÓN GENERAL
@@ -765,13 +784,237 @@ async def inyectar_cartas(
         conn.commit()
         conn.close()
 
+        # Forzar sincronización nativa a AnkiWeb
+        try:
+            invoke_anki("sync")
+        except:
+            pass
+
         return {"mensaje": f"🎉 ¡Éxito! Se inyectaron {cartas_agregadas} cartas."}
 
     except Exception as e:
         return {"mensaje": f"⚠️ Error en el procesamiento final: {str(e)}"}
 
 
+# 8.5 Exportar a APKG Nativo Mobile
+@app.post("/exportar_apkg")
+async def exportar_apkg(
+    req: InyectarRequest,
+    background_tasks: BackgroundTasks,
+    user_id: str = Depends(get_current_user),
+):
+    try:
+        if not req.cartas:
+            return {"error": "No se enviaron cartas."}
+
+        tareas_audio = []
+        archivos_generados = []
+
+        my_model = genanki.Model(
+            1607392319,
+            "TutorIA Model",
+            fields=[
+                {"name": "Frente"},
+                {"name": "Reverso"},
+            ],
+            templates=[
+                {
+                    "name": "Card 1",
+                    "qfmt": "{{Frente}}",
+                    "afmt": '{{FrontSide}}<hr id="answer">{{Reverso}}',
+                },
+            ],
+            css=".card { font-family: arial; font-size: 20px; text-align: center; color: black; background-color: white; }",
+        )
+
+        categoria_elegida = str(req.cartas[0].get("categoria", "Vocabulario")).strip()
+        my_deck = genanki.Deck(2059400110, f"TutorIA::{categoria_elegida}")
+
+        for i, carta in enumerate(req.cartas):
+            texto_frente = str(carta.get("frente", "")).strip()
+            nombre_limpio = "".join(
+                c if c.isalnum() else "_" for c in texto_frente[:15]
+            )
+
+            # Frente MP3
+            texto_audio_frente = (
+                re.sub(r"\(.*?\)", "", texto_frente)
+                .replace("**", "")
+                .replace("*", "")
+                .strip()
+            )
+            nombre_archivo_frente = f"ia_audio_frente_{nombre_limpio}_{i}.mp3"
+            if texto_audio_frente:
+                tareas_audio.append(
+                    generar_audio(texto_audio_frente, nombre_archivo_frente)
+                )
+                archivos_generados.append(nombre_archivo_frente)
+
+            # Ejemplos MP3
+            texto_ejemplo = str(carta.get("ejemplo_ingles", "")).strip()
+            if texto_ejemplo:
+                oraciones_en = [
+                    o.strip() for o in texto_ejemplo.split("|") if o.strip()
+                ]
+                for j, oracion_en in enumerate(oraciones_en):
+                    texto_audio_ejemplo = (
+                        oracion_en.replace("**", "").replace("*", "").strip()
+                    )
+                    nombre_archivo_ejemplo = (
+                        f"ia_audio_ejemplo_{nombre_limpio}_{i}_{j}.mp3"
+                    )
+                    if texto_audio_ejemplo:
+                        tareas_audio.append(
+                            generar_audio(texto_audio_ejemplo, nombre_archivo_ejemplo)
+                        )
+                        archivos_generados.append(nombre_archivo_ejemplo)
+
+        if tareas_audio:
+            await asyncio.gather(*tareas_audio)
+
+        # Generar notas
+        for i, carta in enumerate(req.cartas):
+            texto_frente = str(carta.get("frente", "")).strip()
+            texto_reverso_base = str(carta.get("reverso", "")).strip()
+            texto_ejemplo = str(carta.get("ejemplo_ingles", "")).strip()
+            termino_imagen = str(carta.get("termino_imagen", "")).strip()
+
+            nombre_limpio = "".join(
+                c if c.isalnum() else "_" for c in texto_frente[:15]
+            )
+
+            def md_a_html(texto):
+                texto = re.sub(r"\*\*(.*?)\*\*", r"<b>\1</b>", texto)
+                texto = re.sub(r"\*(.*?)\*", r"<i>\1</i>", texto)
+                return texto
+
+            texto_frente_html = md_a_html(texto_frente)
+            texto_reverso_base_html = md_a_html(texto_reverso_base)
+            texto_ejemplo_html = md_a_html(texto_ejemplo)
+            traduccion_ejemplo = str(carta.get("ejemplo_espanol", "")).strip()
+
+            if "<br>" in texto_reverso_base_html:
+                texto_reverso_final = texto_reverso_base_html
+            else:
+                texto_reverso_final = f"<b>{texto_reverso_base_html}</b>"
+
+            # 1. IMAGEN DE PEXELS (Modificada para guardar en lugar de AnkiConnect)
+            if termino_imagen:
+                try:
+                    url_busqueda = f"https://api.pexels.com/v1/search?query={termino_imagen}&per_page=1"
+                    respuesta_pexels = requests.get(
+                        url_busqueda,
+                        headers={"Authorization": api_key_pexels},
+                        timeout=5,
+                    )
+                    if respuesta_pexels.status_code == 200:
+                        datos_pexels = respuesta_pexels.json()
+                        if datos_pexels.get("photos"):
+                            url_imagen = datos_pexels["photos"][0]["src"]["medium"]
+                            img_data = requests.get(url_imagen, timeout=5).content
+                            nombre_archivo_img = f"ia_img_{nombre_limpio}_{i}.jpg"
+
+                            # Escribir a disco en lugar de AnkiConnect
+                            with open(nombre_archivo_img, "wb") as img_file:
+                                img_file.write(img_data)
+
+                            archivos_generados.append(nombre_archivo_img)
+
+                            texto_reverso_final = (
+                                f"<img src='{nombre_archivo_img}'><br><br>"
+                                + texto_reverso_final
+                            )
+                except Exception as e:
+                    pass
+
+            nombre_archivo_frente = f"ia_audio_frente_{nombre_limpio}_{i}.mp3"
+            if os.path.exists(nombre_archivo_frente):
+                texto_frente_html += f"<br><br>[sound:{nombre_archivo_frente}]"
+
+            if texto_ejemplo:
+                oraciones_en = [
+                    o.strip() for o in texto_ejemplo.split("|") if o.strip()
+                ]
+                oraciones_es = [
+                    o.strip() for o in traduccion_ejemplo.split("|") if o.strip()
+                ]
+
+                texto_reverso_final += "<br><br><hr>"
+                for j, oracion_en in enumerate(oraciones_en):
+                    oracion_en_html = md_a_html(oracion_en)
+                    oracion_es_html = (
+                        md_a_html(oraciones_es[j]) if j < len(oraciones_es) else ""
+                    )
+
+                    nombre_archivo_ejemplo = (
+                        f"ia_audio_ejemplo_{nombre_limpio}_{i}_{j}.mp3"
+                    )
+                    audio_tag = (
+                        f"<br>🔊 <b>Listen:</b> [sound:{nombre_archivo_ejemplo}]"
+                        if os.path.exists(nombre_archivo_ejemplo)
+                        else ""
+                    )
+
+                    if oracion_es_html:
+                        texto_reverso_final += f"<br><br>{oracion_en_html}<br><i>{oracion_es_html}</i>{audio_tag}"
+                    else:
+                        texto_reverso_final += f"<br><br>{oracion_en_html}{audio_tag}"
+
+            my_note = genanki.Note(
+                model=my_model,
+                fields=[texto_frente_html, texto_reverso_final],
+                tags=["generado_por_ia_python"],
+            )
+            my_deck.add_note(my_note)
+
+        my_package = genanki.Package(my_deck)
+        valid_media = [f for f in archivos_generados if os.path.exists(f)]
+        my_package.media_files = valid_media
+
+        # Crear archivo temporal
+        fd, path_temp = tempfile.mkstemp(suffix=".apkg")
+        os.close(fd)
+        my_package.write_to_file(path_temp)
+
+        # Usar BackgroundTasks para limpiar la basura (MP3s y el apkg) una vez enviado
+        def limpiar_archivos(mp3s, apkg):
+            for mp3 in mp3s:
+                if os.path.exists(mp3):
+                    try:
+                        os.remove(mp3)
+                    except:
+                        pass
+            if os.path.exists(apkg):
+                try:
+                    os.remove(apkg)
+                except:
+                    pass
+
+        background_tasks.add_task(limpiar_archivos, valid_media, path_temp)
+
+        # Actualizar BDD
+        conn = sqlite3.connect("tutor.db")
+        c = conn.cursor()
+        c.execute(
+            "UPDATE mensajes SET extraido = 1 WHERE chat_id = ? AND extraido = 0 AND user_id = ?",
+            (req.chat_id, user_id),
+        )
+        conn.commit()
+        conn.close()
+
+        return FileResponse(
+            path_temp,
+            media_type="application/octet-stream",
+            filename=f"TutorIA_{categoria_elegida}.apkg",
+        )
+
+    except Exception as e:
+        return {"error": f"⚠️ Error generando APKG: {str(e)}"}
+
+
 # 9. Ruta de historias
+
+
 @app.post("/generar_historia")
 async def generar_historia(
     req: NuevaHistoria, user_id: str = Depends(get_current_user)
