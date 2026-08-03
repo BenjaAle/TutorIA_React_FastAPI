@@ -6,30 +6,24 @@ import base64  # Codificar imagenes y audios para Anki
 import re
 import requests  # Para consumir la API de Pexels
 import sqlite3
+# pyrefly: ignore [missing-import]
 import firebase_admin
+# pyrefly: ignore [missing-import]
 from firebase_admin import credentials, auth as firebase_auth
-
 # pyrefly: ignore [missing-import]
 from fastapi import FastAPI, Request, Depends, HTTPException, status
-
 # pyrefly: ignore [missing-import]
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
 # pyrefly: ignore [missing-import]
 from fastapi.staticfiles import StaticFiles  # Para que la web lea estaticos js y css
-
 # pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
-
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
-
 # pyrefly: ignore [missing-import]
 from google import genai  # Comunicacion con gemini
-
 # pyrefly: ignore [missing-import]
 from google.genai import types  # Memoria de chat
-
 # pyrefly: ignore [missing-import]
 import edge_tts
 from models import (
@@ -352,8 +346,8 @@ def conversar(mensaje: Mensaje, user_id: str = Depends(get_current_user)):
 
         # E) Guardamos la respuesta de la IA
         c.execute(
-            "INSERT INTO mensajes (chat_id, rol, texto) VALUES (?, ?, ?)",
-            (mensaje.chat_id, "bot", respuesta.text),
+            "INSERT INTO mensajes (chat_id, rol, texto, user_id) VALUES (?, ?, ?, ?)",
+            (mensaje.chat_id, "bot", respuesta.text, user_id),
         )
         conn.commit()
         conn.close()

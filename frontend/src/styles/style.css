@@ -305,6 +305,6 @@ input:focus {
     padding: 10px;
   }
   .header {
-    padding-left: 100px !important; /* Espacio para el menu burger */
+    padding-left: 60px !important; /* Espacio para el menu burger */
   }
 }

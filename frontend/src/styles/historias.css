@@ -345,23 +345,28 @@
 
 /* --- MOBILE PWA RESPONSIVENESS --- */
 @media screen and (max-width: 768px) {
-  /* Sidebar interna delegada al CSS global */
-
-  .historias-header-row {
-    padding-left: 90px !important;
+  /* Elimincion de padding doble y fixes del titulo */
+  .historias-header-title {
+    font-size: 18px;
   }
-  .new-chat-btn {
-    padding: 8px 5px !important;
-    font-size: 13px !important;
-    width: 100% !important;
+
+  .reproduce-text {
+    display: none;
   }
 
   .story-controls {
-    flex-direction: column;
-    padding: 10px;
+    flex-direction: row;
+    padding: 10px 5px;
+    gap: 5px;
   }
   .mode-btn {
-    width: 100%;
-    margin-bottom: 5px;
+    width: auto;
+    flex: 1; /* Distribuye en una linea equitativamente */
+    margin-bottom: 0px;
+    font-size: 12px;
+    padding: 8px 2px;
+  }
+  .mode-subtitle {
+    display: none;
   }
 }

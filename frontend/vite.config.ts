@@ -6,7 +6,8 @@ export default defineConfig({
   plugins: [react()],
   // Añadí server para poder hacer proxy al backend y evitar problemas de CORS
   // para no escribir la ruta completa en los fetch
-  server: { 
+  server: {
+    allowedHosts: true,
     proxy: {
       // Todo lo que empiece por /api, /chats, etc. va al backend
       '/api': 'http://127.0.0.1:8000',

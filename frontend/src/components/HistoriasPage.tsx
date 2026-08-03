@@ -570,7 +570,7 @@ export default function HistoriasPage() {
               </select>
               {indiceAudio === -1 && lineas.length > 0 && (
                 <button className="anki-btn" onClick={() => reproducirDesde(0)}>
-                  ▶ Reproducir
+                  ▶ <span className="reproduce-text">Reproducir</span>
                 </button>
               )}
             </div>
