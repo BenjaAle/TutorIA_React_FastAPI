@@ -348,32 +348,36 @@ export default function ModalAnki({
             justifyContent: "space-between",
           }}
         >
-          <button
-            className="confirm-btn"
-            onClick={handleConfirmarTodo}
-            disabled={injectedLoading || cartas.length === 0}
-            style={{ flex: 1, padding: "10px", minHeight: "50px" }}
-          >
-            {injectedLoading
-              ? "🚀 Inyectando..."
-              : "Inyectar al PC (Auto-Sync)"}
-          </button>
+          {typeof window !== "undefined" && window.innerWidth > 768 && (
+            <button
+              className="confirm-btn"
+              onClick={handleConfirmarTodo}
+              disabled={injectedLoading || cartas.length === 0}
+              style={{ flex: 1, padding: "10px", minHeight: "50px" }}
+            >
+              {injectedLoading
+                ? "🚀 Inyectando..."
+                : "Inyectar al PC"}
+            </button>
+          )}
 
-          <button
-            className="confirm-btn"
-            onClick={handleExportarAPKG}
-            disabled={injectedLoading || cartas.length === 0}
-            style={{
-              flex: 1,
-              backgroundColor: "#28a745",
-              padding: "10px",
-              minHeight: "50px",
-            }}
-          >
-            {injectedLoading
-              ? "📦 Empacando..."
-              : "Descargar para Móvil (.apkg)"}
-          </button>
+          {typeof window !== "undefined" && window.innerWidth <= 768 && (
+            <button
+              className="confirm-btn"
+              onClick={handleExportarAPKG}
+              disabled={injectedLoading || cartas.length === 0}
+              style={{
+                flex: 1,
+                backgroundColor: "#28a745",
+                padding: "10px",
+                minHeight: "50px",
+              }}
+            >
+              {injectedLoading
+                ? "📦 Empacando..."
+                : "Descargar para Móvil (.apkg)"}
+            </button>
+          )}
         </div>
       </div>
     </div>

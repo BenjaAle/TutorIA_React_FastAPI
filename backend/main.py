@@ -99,19 +99,42 @@ def get_current_user(cred: HTTPAuthorizationCredentials = Depends(security)):
 
 VOCAL_TTS = "en-US-AvaNeural"
 
+# Semáforo para limitar la concurrencia a Microsoft Edge TTS (Evita fallas y archivos vacíos)
+audio_sem = asyncio.Semaphore(5)
+
 
 # Podria usar edge_tts.Communicate(texto, voz, rate="-10%") por si quiero menos velocidad
-async def generar_audio(texto, nombre_archivo, voz=VOCAL_TTS):
+async def generar_audio(texto, nombre_archivo, voz=VOCAL_TTS, retries=3):
     try:
         # Edge-TTS tira error si el texto no contiene vocales o son puros emojis
         if not texto or len(texto.strip()) == 0:
             return
 
-        comunicacion = edge_tts.Communicate(texto, voz, rate="-5%")
-        await comunicacion.save(nombre_archivo)
+        async with audio_sem:
+            for intento in range(retries):
+                try:
+                    comunicacion = edge_tts.Communicate(texto, voz, rate="-5%")
+                    await comunicacion.save(nombre_archivo)
+
+                    # Validar que el archivo se creó y tiene contenido
+                    if (
+                        os.path.exists(nombre_archivo)
+                        and os.path.getsize(nombre_archivo) > 0
+                    ):
+                        return
+
+                except Exception as e:
+                    if intento == retries - 1:
+                        raise e
+                    await asyncio.sleep(1)  # Esperar un poco antes de reintentar
     except Exception as e:
         print(f"Aviso: Fallo generando audio para '{texto[:15]}': {str(e)}")
-        pass
+        # Si falló y dejó un archivo vacío o corrupto, limpiarlo
+        if os.path.exists(nombre_archivo):
+            try:
+                os.remove(nombre_archivo)
+            except:
+                pass
 
 
 # ==========================================
@@ -828,7 +851,7 @@ async def exportar_apkg(
         )
 
         categoria_elegida = str(req.cartas[0].get("categoria", "Vocabulario")).strip()
-        my_deck = genanki.Deck(2059400110, f"TutorIA::{categoria_elegida}")
+        my_deck = genanki.Deck(2059400110, NOMBRE_MAZO)
 
         for i, carta in enumerate(req.cartas):
             texto_frente = str(carta.get("frente", "")).strip()
@@ -1020,7 +1043,12 @@ async def generar_historia(
     req: NuevaHistoria, user_id: str = Depends(get_current_user)
 ):
     instrucciones_maestras = f"""
-    Eres un experto profesor de inglés. Tu ÚNICA función es crear una historia interesante en inglés basándote en la temática del usuario, con nivel '{req.nivel}'.
+    Eres un experto profesor de inglés. Tu ÚNICA función es crear una historia interesante en inglés basándote en la temática del usuario.
+    El nivel de inglés debe ser estrictamente: {req.nivel}.
+    
+    ESTILO DE REDACCIÓN:
+    La historia DEBE sonar natural, conversacional y fluida (como la contaría un nativo de la vida real).
+    Evita usar estructuras excesivamente formales, narrativas robóticas o un vocabulario muy sofisticado y "de diccionario", prefiriendo la naturalidad y expresiones comunes.
     
     REGLAS ESTRICTAS:
     1. La historia debe tener entre 35 y 40 oraciones en total, a menos que se te solicite otra cantidad.
