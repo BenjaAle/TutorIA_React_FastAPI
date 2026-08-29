@@ -9,9 +9,10 @@ import {
   useParams,
 } from "react-router-dom";
 import Sidebar from "./components/Sidebar.tsx";
-import ChatPage from "./components/ChatPage.tsx";
-import HistoriasPage from "./components/HistoriasPage";
-import FoneticaPage from "./components/FoneticaPage";
+import ChatPage from "./pages/ChatPage.tsx";
+import HistoriasPage from "./pages/HistoriasPage.tsx";
+import FoneticaPage from "./pages/FoneticaPage.tsx";
+import ClozePage from "./pages/ClozePage.tsx";
 import "./styles/style.css";
 import "./styles/chats.css";
 
@@ -157,6 +158,14 @@ function App() {
           element={
             <MainLayout>
               <FoneticaPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/cloze"
+          element={
+            <MainLayout>
+              <ClozePage />
             </MainLayout>
           }
         />

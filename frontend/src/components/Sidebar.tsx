@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom"; // link equivale a <a> pero sin recargar la página
+import { Link, useLocation, useNavigate } from "react-router-dom"; // link equivale a <a> pero sin recargar la página
 
 // Los chats tienen id y titulo
 interface Chat {
@@ -20,6 +20,7 @@ export default function Sidebar({
   selectedChatId,
   onSelectChat,
 }: SidebarProps) {
+  const navigate = useNavigate();
   // Mobile toggle state
   const [isMobileOpen, setIsMobileOpenState] = useState(
     () => localStorage.getItem("sidebarOpen") === "true",
@@ -143,6 +144,11 @@ export default function Sidebar({
                 📚 Ir a Historias
               </button>
             </Link>
+            <Link to="/cloze" className="sidebar-link">
+              <button className="new-chat-btn btn-compact btn-full">
+                🧩 Cloze
+              </button>
+            </Link>
           </div>
         </div>
       </>
@@ -188,6 +194,12 @@ export default function Sidebar({
                   🗣️ Fonética
                 </button>
               </Link>
+
+              <Link to="/cloze" className="sidebar-link">
+                <button className="new-chat-btn btn-compact">
+                  🧩 Ejercicios
+                </button>
+              </Link>
             </>
           ) : (
             /* Formulario para nuevo chat */
@@ -228,6 +240,7 @@ export default function Sidebar({
               onClick={() => {
                 onSelectChat(chat.id);
                 setIsMobileOpen(false);
+                navigate("/");
               }}
               role="button" // Indica que el div se comporta como un boton
               // No hago un boton directamente para no tener un boton dentro de otro boton (eliminar y renombrar)
@@ -236,6 +249,7 @@ export default function Sidebar({
                 if (e.key === "Enter") {
                   onSelectChat(chat.id);
                   setIsMobileOpen(false);
+                  navigate("/");
                 }
               }}
             >

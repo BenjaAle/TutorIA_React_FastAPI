@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { Link } from "react-router-dom";
 import ModalAnki, { type CartaAnki } from "../components/ModalAnki";
 import "../styles/historias.css";
-import KindleSelection from "./KindleSelection";
+import KindleSelection from "../components/KindleSelection";
 
 // Cada historia tiene id, titulo y si esta fijada o no
 interface HistoriaPreview {

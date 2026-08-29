@@ -1,20 +1,26 @@
 import os
 import sqlite3
+
 # pyrefly: ignore [missing-import]
 import firebase_admin
+
 # pyrefly: ignore [missing-import]
 from firebase_admin import credentials
+
 # pyrefly: ignore [missing-import]
 from fastapi import FastAPI
+
 # pyrefly: ignore [missing-import]
 from fastapi.staticfiles import StaticFiles  # Para que la web lea estaticos js y css
+
 # pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
-from routers import chats, anki, historias, fonetica, vocabulario
+from routers import chats, anki, historias, fonetica, vocabulario, ejercicios
 
 # Inicializar Firebase Admin
 cred = credentials.Certificate("credenciales_firebase.json")
 firebase_admin.initialize_app(cred)
+
 
 # Inicializar la base de datos
 def iniciar_bd():
@@ -83,6 +89,18 @@ def iniciar_bd():
     except sqlite3.OperationalError:
         pass
 
+    # Tabla para descartar/guardar oraciones Cloze
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS oraciones_cloze (
+                 id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                 ingles TEXT, 
+                 espanol TEXT, 
+                 user_id TEXT, 
+                 chat_id INTEGER,
+                 origen TEXT DEFAULT 'anki',
+                 palabra_oculta TEXT DEFAULT '')"""
+    )
+
     conn.commit()
     conn.close()
 
@@ -114,3 +132,4 @@ app.include_router(anki.router)
 app.include_router(historias.router)
 app.include_router(fonetica.router)
 app.include_router(vocabulario.router)
+app.include_router(ejercicios.router)

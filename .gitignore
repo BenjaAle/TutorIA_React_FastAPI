@@ -34,3 +34,6 @@ backend/static/audios/
 
 # Antiguos
 antiguo/
+
+# Scripts locales
+iniciar.bat
