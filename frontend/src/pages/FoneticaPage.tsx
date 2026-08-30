@@ -52,21 +52,20 @@ export default function FoneticaPage() {
   }, []);
 
   // Manejador de click en tarjeta de fonema
-  const handleClickFonema = (ejemplos: string[]) => {
-    window.speechSynthesis.cancel();
+  const handleClickFonema = (f: Fonema) => {
+    // Detener cualquier audio previo si existe
+    if ((window as any).currentFoneticaAudio) {
+      (window as any).currentFoneticaAudio.pause();
+    }
 
-    // "book (/bʊk/)" -> al hacer split(" ") toma solo "book".
-    const palabrasLimpias = ejemplos.map((ej) => ej.split(" ")[0]);
+    // Ruta donde el backend (FastAPI) sirve los audios estáticos
+    const url = `http://localhost:8000/static/audios/fonemas/${f.id}.mp3`;
+    const audio = new Audio(url);
+    (window as any).currentFoneticaAudio = audio;
 
-    // Unimos con coma para la pausa entre palabras
-    const textoAReproducir = palabrasLimpias.join(", ");
-
-    const utterance = new SpeechSynthesisUtterance(textoAReproducir);
-    utterance.lang = "en-US";
-    utterance.rate = 0.7;
-    utterance.pitch = 1.0;
-
-    window.speechSynthesis.speak(utterance);
+    audio
+      .play()
+      .catch((e) => console.error("Error al reproducir audio pregenerado:", e));
   };
 
   // Manejador de click en tarjeta de connected speech
@@ -102,18 +101,29 @@ export default function FoneticaPage() {
         </p>
 
         <div className="grid-fonemas">
-          {fonemas.map((f) => (
-            <div
-              key={f.id}
-              className="card-fonema"
-              onClick={() => handleClickFonema(f.ejemplos)}
-            >
-              <div className="simbolo-fonema">{f.simbolo}</div>
-              <div className="fonema-nombre">{f.nombre}</div>
-              <div className="fonema-desc">{f.desc}</div>
-              <div className="fonema-ejemplos">Ej: {f.ejemplos.join(", ")}</div>
-            </div>
-          ))}
+          {fonemas.map((f) => {
+            const primerEjemplo = f.ejemplos.length > 0 ? f.ejemplos[0] : "";
+            const partes = primerEjemplo.split(" ");
+            const ejemploLimpio = partes[0] || "";
+            const ejemploIpa = partes.slice(1).join(" ");
+
+            return (
+              <div
+                key={f.id}
+                className="card-fonema duolingo-style"
+                onClick={() => handleClickFonema(f)}
+              >
+                <div className="simbolo-fonema">{f.simbolo}</div>
+                <div className="ejemplo-limpio">
+                  {ejemploLimpio}{" "}
+                  {ejemploIpa && (
+                    <span className="ejemplo-ipa">{ejemploIpa}</span>
+                  )}
+                </div>
+                <div className="fonema-desc">{f.desc}</div>
+              </div>
+            );
+          })}
         </div>
 
         {/* La Tabla de Connected Speech */}

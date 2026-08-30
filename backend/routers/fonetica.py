@@ -1,6 +1,7 @@
 import asyncio
 from config import generar_audio, GEMINI_MODEL, client, get_current_user
 from models import EntrenamientoPares
+
 # pyrefly: ignore [missing-import]
 from fastapi import APIRouter, Depends
 import os
@@ -318,7 +319,7 @@ def obtener_fonemas():
             "simbolo": "/s/",
             "nombre": "La 'S' Suave",
             "desc": "Junta los dientes, lengua detrás. Sopla aire siseando. SIN vibrar.",
-            "ejemplos": ["sue (/su\u02d0/)", "bus (/b\u028cs/)", "face (/fe\u026as/)"],
+            "ejemplos": ["sun (/s\u028cn/)", "bus (/b\u028cs/)", "face (/fe\u026as/)"],
         },
         {
             "id": "z_vibra",
@@ -326,7 +327,7 @@ def obtener_fonemas():
             "nombre": "La 'Z' de Abeja",
             "desc": "Junta los dientes. Sopla aire y VIBRA la garganta fuerte (imita a una mosca/abeja).",
             "ejemplos": [
-                "zoo (/zu\u02d0/)",
+                "zero (/\u02c8z\u026aro\u028a/)",
                 "buzz (/b\u028cz/)",
                 "phase (/fe\u026az/)",
             ],
