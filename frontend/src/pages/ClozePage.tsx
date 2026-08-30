@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import "../styles/style.css";
 import ModalAnki, { type CartaAnki } from "../components/ModalAnki";
 
+type Token =
+  | { type: "text"; val: string }
+  | { type: "input"; val: string; id: number };
+
 interface Oracion {
   id: number;
   ingles: string;
@@ -13,7 +17,8 @@ export default function ClozePage() {
   const [oraciones, setOraciones] = useState<Oracion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [userInput, setUserInput] = useState("");
+  const [userInputs, setUserInputs] = useState<Record<number, string>>({});
+  const [wrongIds, setWrongIds] = useState<number[]>([]);
   const [showRespuesta, setShowRespuesta] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generando, setGenerando] = useState(false);
@@ -25,21 +30,19 @@ export default function ClozePage() {
   const currentOracion = oraciones[currentIndex];
 
   const getClozeDetails = (frase: string, palabra_oculta?: string) => {
-    if (!frase) return { fraseOculta: "", palabraCorrecta: "" };
+    if (!frase) return { tokens: [], answerMap: {} };
 
-    const palabras = frase.split(" ");
-    let wordIndex = -1;
-
-    // Si el backend dictó una palabra específica, la buscamos
+    // 1. Array de palabras a ocultar
+    let wordsToHide: string[] = [];
     if (palabra_oculta) {
-      const pOc = palabra_oculta.toLowerCase().replace(/[^a-z]/g, "");
-      wordIndex = palabras.findIndex(
-        (w) => w.toLowerCase().replace(/[^a-z]/g, "") === pOc,
-      );
+      wordsToHide = palabra_oculta
+        .split(",")
+        .map((w) => w.trim())
+        .filter(Boolean);
     }
 
-    // Fallback: si no hay palabra_oculta (tarjetas viejas) o no se encontró
-    if (wordIndex === -1) {
+    // 2. Fallback por si backend omitió
+    if (wordsToHide.length === 0) {
       const preposiciones = [
         "in",
         "on",
@@ -54,30 +57,60 @@ export default function ClozePage() {
         "by",
         "onto",
       ];
-      wordIndex = palabras.findIndex((w) =>
+      const palabras = frase.split(" ");
+      const found = palabras.find((w) =>
         preposiciones.includes(w.toLowerCase().replace(/[^a-z]/g, "")),
       );
+      if (found) {
+        wordsToHide.push(found.replace(/[^a-zA-Z]/g, ""));
+      } else {
+        const midWord = palabras[Math.max(0, Math.floor(palabras.length / 2))];
+        if (midWord) {
+          wordsToHide.push(midWord.replace(/[^a-zA-Z]/g, ""));
+        }
+      }
     }
 
-    // Fallback final
-    if (wordIndex === -1) {
-      wordIndex = Math.max(0, Math.floor(palabras.length / 2));
+    wordsToHide = wordsToHide.filter((w) => w.length > 0);
+    if (wordsToHide.length === 0)
+      return { tokens: [{ type: "text", val: frase }], answerMap: {} };
+
+    // 3. Crear regex mágico de palabra completa (escapando caracteres especiales para no romper JS)
+    const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regexPattern = `\\b(${wordsToHide.map(escapeRegex).join("|")})\\b`;
+    const regex = new RegExp(regexPattern, "gi");
+
+    let match;
+    let lastIndex = 0;
+    let idCounter = 0;
+    const tokens: Token[] = [];
+    const answerMap: Record<number, string> = {};
+
+    while ((match = regex.exec(frase)) !== null) {
+      if (match.index > lastIndex) {
+        tokens.push({
+          type: "text",
+          val: frase.substring(lastIndex, match.index),
+        });
+      }
+      tokens.push({ type: "input", val: match[0], id: idCounter });
+      answerMap[idCounter] = match[0];
+      idCounter++;
+      lastIndex = regex.lastIndex;
     }
 
-    const wordOriginal = palabras[wordIndex];
-    if (!wordOriginal) return { fraseOculta: frase, palabraCorrecta: "" };
+    if (lastIndex < frase.length) {
+      tokens.push({ type: "text", val: frase.substring(lastIndex) });
+    }
 
-    const cleanWord = wordOriginal.replace(/[^a-zA-Z]/g, "");
-    const replacementMask = "____";
+    if (tokens.length === 0) {
+      tokens.push({ type: "text", val: frase });
+    }
 
-    const maskedArray = [...palabras];
-    maskedArray[wordIndex] = wordOriginal.replace(cleanWord, replacementMask);
-    const fraseOculta = maskedArray.join(" ");
-
-    return { fraseOculta, palabraCorrecta: cleanWord };
+    return { tokens, answerMap };
   };
 
-  const { fraseOculta, palabraCorrecta } = getClozeDetails(
+  const { tokens, answerMap } = getClozeDetails(
     currentOracion?.ingles || "",
     currentOracion?.palabra_oculta,
   );
@@ -89,7 +122,8 @@ export default function ClozePage() {
   const cargarOraciones = async () => {
     setLoading(true);
     setCurrentIndex(0);
-    setUserInput("");
+    setUserInputs({});
+    setWrongIds([]);
     setShowRespuesta(false);
     setError(null);
     try {
@@ -143,7 +177,8 @@ export default function ClozePage() {
         if (nuevas.length > 0) {
           setOraciones(nuevas);
           if (currentIndex >= nuevas.length) setCurrentIndex(nuevas.length - 1);
-          setUserInput("");
+          setUserInputs({});
+          setWrongIds([]);
           setShowRespuesta(false);
         } else {
           cargarOraciones();
@@ -157,35 +192,62 @@ export default function ClozePage() {
   };
 
   const handleComprobar = () => {
-    if (!palabraCorrecta) return;
+    if (Object.keys(answerMap).length === 0) return;
 
-    if (
-      userInput.toLowerCase().trim() === palabraCorrecta.toLowerCase().trim()
-    ) {
+    let allCorrect = true;
+    const errors: number[] = [];
+
+    Object.keys(answerMap).forEach((key) => {
+      const id = Number(key);
+      const expected = answerMap[id].toLowerCase().trim();
+      const actual = (userInputs[id] || "").toLowerCase().trim();
+      if (actual !== expected) {
+        allCorrect = false;
+        errors.push(id);
+      }
+    });
+
+    if (allCorrect) {
       setShowRespuesta(true);
       playAudio(currentOracion.ingles);
+      setWrongIds([]);
     } else {
-      const inputElem = document.getElementById("cloze-input");
-      if (inputElem) {
-        inputElem.style.borderColor = "red";
-        inputElem.style.animation = "shake 0.5s";
-        setTimeout(() => {
-          inputElem.style.borderColor = "transparent";
-          inputElem.style.animation = "";
-        }, 500);
-      }
+      setWrongIds(errors);
+      errors.forEach((id) => {
+        const el = document.getElementById(`cloze-input-${id}`);
+        if (el) {
+          el.style.borderColor = "red";
+          el.style.animation = "shake 0.5s";
+          setTimeout(() => {
+            el.style.borderColor = "transparent";
+            el.style.animation = "";
+          }, 500);
+        }
+      });
     }
   };
 
   const guardarEnAnki = () => {
-    const palabra = palabraCorrecta || "Palabra";
+    let frenteHTML = "";
+    let palabrasSecretas = "";
+    tokens.forEach((tok) => {
+      if (tok.type === "text") frenteHTML += tok.val;
+      else {
+        frenteHTML += "____";
+        if (palabrasSecretas.length > 0) palabrasSecretas += ", ";
+        palabrasSecretas += tok.val;
+      }
+    });
+
+    if (!palabrasSecretas) palabrasSecretas = "Palabras Clave";
+
     setCartasAExportar([
       {
-        frente: fraseOculta,
-        reverso: palabra,
+        frente: frenteHTML,
+        reverso: palabrasSecretas,
         ejemplo_ingles: currentOracion.ingles,
         ejemplo_espanol: currentOracion.espanol,
-        termino_imagen: palabra,
+        termino_imagen: palabrasSecretas,
         categoria: "Vocabulario",
       },
     ]);
@@ -193,10 +255,20 @@ export default function ClozePage() {
   };
 
   const handleHint = () => {
-    if (!palabraCorrecta) return;
-    if (userInput.length < palabraCorrecta.length) {
-      setUserInput(palabraCorrecta.substring(0, userInput.length + 1));
-    }
+    if (Object.keys(answerMap).length === 0) return;
+    const newInputs = { ...userInputs };
+    Object.keys(answerMap).forEach((key) => {
+      const id = Number(key);
+      const expected = answerMap[id];
+      const current = userInputs[id] || "";
+      if (current.toLowerCase().trim() !== expected.toLowerCase().trim()) {
+        if (current.length < expected.length) {
+          newInputs[id] = expected.substring(0, current.length + 1);
+        }
+      }
+    });
+    setUserInputs(newInputs);
+    setWrongIds([]);
   };
 
   const playAudio = (text: string) => {
@@ -208,7 +280,8 @@ export default function ClozePage() {
   };
 
   const nextQuestion = () => {
-    setUserInput("");
+    setUserInputs({});
+    setWrongIds([]);
     setShowRespuesta(false);
     if (currentIndex + 1 < oraciones.length) {
       setCurrentIndex(currentIndex + 1);
@@ -216,6 +289,20 @@ export default function ClozePage() {
       cargarOraciones();
     }
   };
+
+  useEffect(() => {
+    const handleGlobalKey = (e: KeyboardEvent) => {
+      if (e.repeat) return; // Si mantiene presionada la tecla, la ignoramos
+      if (e.target instanceof HTMLInputElement) return; // Si presionó enter dentro de la caja de texto, ignorar
+
+      if (showRespuesta && !isModalOpen && e.key === "Enter") {
+        e.preventDefault();
+        nextQuestion();
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKey);
+    return () => window.removeEventListener("keydown", handleGlobalKey);
+  });
 
   const BotonGenerar = () => (
     <div style={{ marginTop: "2rem", textAlign: "center" }}>
@@ -365,12 +452,72 @@ export default function ClozePage() {
             <h1
               style={{
                 margin: "2rem 0",
-                color: showRespuesta ? "#4CAF50" : "white",
+                color: "white",
                 fontSize: "2rem",
                 letterSpacing: "1px",
+                lineHeight: "2.5em",
               }}
             >
-              {showRespuesta ? currentOracion.ingles : fraseOculta}
+              {tokens.map((tok, i) => {
+                if (tok.type === "text") {
+                  return (
+                    <span
+                      key={i}
+                      style={{ color: showRespuesta ? "#4CAF50" : "inherit" }}
+                    >
+                      {tok.val}
+                    </span>
+                  );
+                } else {
+                  if (showRespuesta) {
+                    return (
+                      <span
+                        key={i}
+                        style={{ color: "#4CAF50", fontWeight: "bold" }}
+                      >
+                        {tok.val}
+                      </span>
+                    );
+                  }
+                  return (
+                    <input
+                      key={i}
+                      id={`cloze-input-${tok.id}`}
+                      type="text"
+                      value={userInputs[tok.id] || ""}
+                      onChange={(e) =>
+                        setUserInputs({
+                          ...userInputs,
+                          [tok.id]: e.target.value,
+                        })
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleComprobar();
+                        }
+                      }}
+                      style={{
+                        padding: "8px 12px",
+                        margin: "0 8px",
+                        borderRadius: "8px",
+                        border: `2px solid ${
+                          wrongIds.includes(tok.id) ? "red" : "#555"
+                        }`,
+                        background: "#333",
+                        color: "white",
+                        fontSize: "2rem",
+                        width: `${Math.max(3, tok.val.length)}ch`,
+                        textAlign: "center",
+                        outline: "none",
+                        transition: "border-color 0.3s ease",
+                      }}
+                      autoFocus={tok.id === 0}
+                    />
+                  );
+                }
+              })}
             </h1>
 
             {!showRespuesta && (
@@ -382,26 +529,7 @@ export default function ClozePage() {
                   alignItems: "center",
                 }}
               >
-                <input
-                  id="cloze-input"
-                  type="text"
-                  value={userInput}
-                  onChange={(e) => setUserInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleComprobar()}
-                  placeholder="Escribe la palabra..."
-                  style={{
-                    padding: "12px 16px",
-                    borderRadius: "8px",
-                    border: "2px solid #555",
-                    background: "#333",
-                    color: "white",
-                    fontSize: "1.1rem",
-                    width: "100%",
-                    outline: "none",
-                    transition: "border-color 0.3s ease",
-                  }}
-                  autoFocus
-                />
+                <div style={{ flexGrow: 1 }} />
                 <button
                   onClick={handleHint}
                   className="new-chat-btn"

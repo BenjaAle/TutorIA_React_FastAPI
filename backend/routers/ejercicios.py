@@ -74,13 +74,15 @@ def generar_cloze_con_ia(user_id: str = Depends(get_current_user)):
         Analiza este historial reciente de conversación del estudiante (delimitado por <historial>).
         Genera EXACTAMENTE 5 oraciones muy útiles en inglés basadas en sus errores o usando conectores o preposiciones comunes (in, on, at, to, for, with).
         REGLA 1: Devuelve ESTRICTAMENTE un arreglo JSON puro. Nada de markdown.
-        REGLA 2: Cada objeto debe tener la oración completa en "ingles", su "espanol", y OBLIGATORIAMENTE la "palabra_oculta" que consideres más desafiante de la oración para que el alumno intente adivinarla.
+        REGLA 2: Cada objeto debe tener la oración completa en "ingles", su "espanol", y OBLIGATORIAMENTE la "palabra_oculta" que consideres más desafiante.
+        REGLA 3: PROHIBIDO usar guiones bajos (____) o huecos en la propiedad "ingles". Debe ser una oración en inglés perfectamente estructurada y completa. El programa frontend se encargará visualmente de ocultar la palabra.
+        REGLA 4: Si deseas ocultar más de una palabra (ya sean juntas o separadas en la oración), sepáralas por coma en "palabra_oculta".
         Formato esperado:
         [
           {
             "ingles": "She is interested in learning French.",
             "espanol": "Ella está interesada en aprender francés.",
-            "palabra_oculta": "interested"
+            "palabra_oculta": "interested, in"
           }
         ]
         """
