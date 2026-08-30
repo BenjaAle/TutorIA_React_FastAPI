@@ -1,0 +1,171 @@
+.roadmap-container {
+  display: flex;
+  flex: 1;
+  background-color: #1a1a1a;
+  color: white;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.roadmap-main {
+  flex: 2;
+  padding: 40px;
+  overflow-y: auto;
+}
+
+.roadmap-title {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+.roadmap-subtitle {
+  color: #aaa;
+  margin-bottom: 40px;
+}
+
+.roadmap-level {
+  margin-bottom: 50px;
+  background-color: #242424;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.level-title {
+  border-bottom: 2px solid #333;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.nodes-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+}
+
+.roadmap-node {
+  background-color: #333;
+  width: 250px;
+  padding: 15px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+.roadmap-node:hover {
+  transform: scale(1.05);
+  background-color: #444;
+}
+.roadmap-node.selected {
+  border-color: #00ff88;
+}
+.roadmap-node.completed {
+  background-color: #005033;
+  border-color: #00ff88;
+}
+
+.node-icon {
+  font-size: 1.5rem;
+  margin-right: 15px;
+  background: rgba(0,0,0,0.2);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.node-name {
+  font-weight: bold;
+}
+
+/* Side Pannel */
+.roadmap-sidepanel {
+  flex: 1;
+  background-color: #242424;
+  border-left: 1px solid #333;
+  padding: 30px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.roadmap-sidepanel h3 {
+  font-size: 2rem;
+  color: #00ff88;
+  margin-bottom: 20px;
+}
+
+.theory-block, .examples-block {
+  background-color: #1a1a1a;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+.theory-block h4, .examples-block h4 {
+  margin-top: 0;
+  color: #aaa;
+  border-bottom: 1px solid #333;
+  padding-bottom: 10px;
+}
+.theory-block p {
+  line-height: 1.6;
+}
+
+.examples-block ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.examples-block li {
+  margin-bottom: 15px;
+  background-color: #2a2a2a;
+  padding: 15px;
+  border-radius: 8px;
+}
+.examples-block li strong {
+  display: block;
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+}
+.examples-block li span {
+  color: #bbb;
+}
+
+.action-buttons {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn-complete {
+  background-color: transparent;
+  color: #00ff88;
+  border: 1px solid #00ff88;
+  padding: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+.btn-complete:hover {
+  background-color: #00ff88;
+  color: black;
+}
+
+.btn-practice {
+  background-color: #00ff88;
+  color: black;
+  border: none;
+  padding: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1.1rem;
+  transition: all 0.2s;
+}
+.btn-practice:hover {
+  background-color: #00cc6a;
+}

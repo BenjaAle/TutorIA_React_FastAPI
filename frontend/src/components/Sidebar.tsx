@@ -148,6 +148,12 @@ export default function Sidebar({
                 </Link>
               )}
 
+              <Link to="/roadmap" className="sidebar-link">
+                <button className="new-chat-btn btn-compact">
+                  🗺️ Ruta Guiada
+                </button>
+              </Link>
+
               {/* Link reemplaza a las etiquetas <a> para navegar sin recargar la página */}
               <Link to="/historias" className="sidebar-link">
                 <button className="new-chat-btn btn-compact btn-historias">

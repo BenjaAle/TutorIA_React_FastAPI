@@ -13,6 +13,7 @@ import ChatPage from "./pages/ChatPage.tsx";
 import HistoriasPage from "./pages/HistoriasPage.tsx";
 import FoneticaPage from "./pages/FoneticaPage.tsx";
 import ClozePage from "./pages/ClozePage.tsx";
+import RoadmapPage from "./pages/RoadmapPage.tsx";
 import "./styles/style.css";
 import "./styles/chats.css";
 
@@ -153,6 +154,14 @@ function App() {
 
         <Route path="/historias" element={<HistoriasPage />} />
 
+        <Route
+          path="/roadmap"
+          element={
+            <MainLayout>
+              <RoadmapPage />
+            </MainLayout>
+          }
+        />
         <Route
           path="/fonetica"
           element={

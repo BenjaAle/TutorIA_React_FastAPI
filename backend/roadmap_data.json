@@ -1,0 +1,73 @@
+{
+  "niveles": [
+    {
+      "id": "A1",
+      "titulo": "Primeros Pasos",
+      "nodos": [
+        {
+          "id": "node_presente_simple",
+          "titulo": "El Presente Simple",
+          "teoria": "En inglés, ¡siempre decimos quién hace la acción! (I, you, he...). Usamos el presente simple para hablar de rutinas y el día a día.\nOjo: Para Él/Ella/Eso (He/She/It) casi siempre le ponemos una 's' al verbo.",
+          "ejemplos": [
+            {
+              "en": "I drink coffee every day.",
+              "es": "Bebo café todos los días."
+            },
+            {
+              "en": "She plays tennis on Tuesdays.",
+              "es": "Ella juega al tenis los martes."
+            },
+            {
+              "en": "They live in a big house.",
+              "es": "Ellos viven en una casa grande."
+            }
+          ],
+          "prompt_context": "The user is an absolute beginner. You must help them practice the simple present tense (daily routines, hobbies). Use very basic A1 vocabulary."
+        },
+        {
+          "id": "node_to_be",
+          "titulo": "El Verbo To Be",
+          "teoria": "El famoso verbo 'Ser / Estar'.\nYo soy (I am), Tú eres (You are), Él/Ella es (He/She is).\nSirve para decir quién eres, dónde estás, tus emociones o incluso tu edad (¡en inglés la edad 'se es', no 'se tiene'!).",
+          "ejemplos": [
+            {
+              "en": "I am angry, but you are happy.",
+              "es": "Yo estoy enfadado, pero tú estás feliz."
+            },
+            {
+              "en": "She is twenty years old.",
+              "es": "Ella tiene veinte años."
+            },
+            {
+              "en": "We are at the park.",
+              "es": "Nosotros estamos en el parque."
+            }
+          ],
+          "prompt_context": "The user is an absolute beginner. Practice the verb To Be in present tense. Ask about feelings, professions, and locations."
+        }
+      ]
+    },
+    {
+      "id": "A2",
+      "titulo": "Supervivencia",
+      "nodos": [
+        {
+          "id": "node_pasado_simple",
+          "titulo": "Historias del Pasado",
+          "teoria": "A los verbos 'regulares' les agregamos '-ed' al final para hablar del pasado (ej. work -> worked).\nPero cuidado, ¡hay muchos verbos irregulares que tendrás que memorizar poco a poco con la inmersión! (ej. go -> went).",
+          "ejemplos": [
+            { "en": "I worked late yesterday.", "es": "Trabajé tarde ayer." },
+            {
+              "en": "We went to the beach last summer.",
+              "es": "Fuimos a la playa el último verano."
+            },
+            {
+              "en": "She didn't call me.",
+              "es": "Ella no me llamó (en negativo usamos didn't)."
+            }
+          ],
+          "prompt_context": "The user is A2 level. Practice the simple past tense. Ask about what they did yesterday, last weekend, or on their last vacation."
+        }
+      ]
+    }
+  ]
+}
