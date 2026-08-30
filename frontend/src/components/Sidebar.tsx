@@ -30,9 +30,9 @@ export default function Sidebar({
     localStorage.setItem("sidebarOpen", open ? "true" : "false");
   };
 
-  // Saber si estamos en fonetica o no, para cambiar el Sidebar
+  // Saber si estamos en la página de chats para alternar el botón principal
   const location = useLocation();
-  const isFonetica = location.pathname === "/fonetica";
+  const isChatPage = location.pathname === "/";
 
   /*2. Estados (Variables que, al cambiar, redibujan la pantalla)
   Cada vez que un estado cambia, React vuelve a dibujar el componente (Sidebar en este caso).
@@ -114,47 +114,6 @@ export default function Sidebar({
     cargarChats(); // actualizo la lista
   };
 
-  // 5. Renderizado de lo que se ve en pantalla
-  if (isFonetica) {
-    return (
-      <>
-        <button
-          className={`mobile-menu-btn ${isMobileOpen ? "hidden" : ""}`}
-          onClick={() => setIsMobileOpen(true)}
-        >
-          ☰
-        </button>
-        {isMobileOpen && (
-          <div
-            className="sidebar-overlay"
-            onClick={() => setIsMobileOpen(false)}
-          ></div>
-        )}
-        <div
-          className={`sidebar fonetica-sidebar ${isMobileOpen ? "open" : ""}`}
-        >
-          <div className="sidebar-actions">
-            <Link to="/" className="sidebar-link">
-              <button className="new-chat-btn btn-compact btn-back btn-full">
-                💬 Volver al Chat
-              </button>
-            </Link>
-            <Link to="/historias" className="sidebar-link">
-              <button className="new-chat-btn btn-compact btn-historias btn-full">
-                📚 Ir a Historias
-              </button>
-            </Link>
-            <Link to="/cloze" className="sidebar-link">
-              <button className="new-chat-btn btn-compact btn-full">
-                🧩 Cloze
-              </button>
-            </Link>
-          </div>
-        </div>
-      </>
-    );
-  }
-
   return (
     <>
       <button
@@ -174,13 +133,20 @@ export default function Sidebar({
           {/* if: Si no mostramos el formulario, mostramos los botones de nuevo chat, historias, etc */}
           {!mostrarFormulario ? (
             <>
-              {/*Pone True para mostrar el formulario del nuevo chat en caso de hacer clic*/}
-              <button
-                className="new-chat-btn btn-compact"
-                onClick={() => setMostrarFormulario(true)}
-              >
-                + Nuevo Chat
-              </button>
+              {isChatPage ? (
+                <button
+                  className="new-chat-btn btn-compact"
+                  onClick={() => setMostrarFormulario(true)}
+                >
+                  + Nuevo Chat
+                </button>
+              ) : (
+                <Link to="/" className="sidebar-link">
+                  <button className="new-chat-btn btn-compact btn-back">
+                    💬 Volver al Chat
+                  </button>
+                </Link>
+              )}
 
               {/* Link reemplaza a las etiquetas <a> para navegar sin recargar la página */}
               <Link to="/historias" className="sidebar-link">
@@ -232,69 +198,70 @@ export default function Sidebar({
 
         <div className="chat-list">
           {/* Recorremos el arreglo de chats y dibujamos un div por cada uno */}
-          {chats.map((chat) => (
-            // key es para identificar cada elemento de la lista y que React no se confunda al redibujar
-            <div
-              key={chat.id}
-              className={`chat-item ${selectedChatId === chat.id ? "active" : ""}`}
-              onClick={() => {
-                onSelectChat(chat.id);
-                setIsMobileOpen(false);
-                navigate("/");
-              }}
-              role="button" // Indica que el div se comporta como un boton
-              // No hago un boton directamente para no tener un boton dentro de otro boton (eliminar y renombrar)
-              tabIndex={0} // navegable con el tab
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
+          {isChatPage &&
+            chats.map((chat) => (
+              // key es para identificar cada elemento de la lista y que React no se confunda al redibujar
+              <div
+                key={chat.id}
+                className={`chat-item ${selectedChatId === chat.id ? "active" : ""}`}
+                onClick={() => {
                   onSelectChat(chat.id);
                   setIsMobileOpen(false);
                   navigate("/");
-                }
-              }}
-            >
-              {/* Si estamos editando este chat, mostramos un input, si no, mostramos el título */}
-              {editandoId === chat.id ? (
-                <input
-                  type="text"
-                  value={tituloEditado}
-                  onChange={(e) => setTituloEditado(e.target.value)}
-                  onBlur={() => guardarEdicion(chat.id)} // Guarda los cambios al clicear fuera del input
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && guardarEdicion(chat.id)
+                }}
+                role="button" // Indica que el div se comporta como un boton
+                // No hago un boton directamente para no tener un boton dentro de otro boton (eliminar y renombrar)
+                tabIndex={0} // navegable con el tab
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    onSelectChat(chat.id);
+                    setIsMobileOpen(false);
+                    navigate("/");
                   }
-                  autoFocus
-                  className="edit-chat-input"
-                />
-              ) : (
-                <span className="chat-item-title">{chat.titulo}</span> //span solo contiene el nombre del chat
-              )}
+                }}
+              >
+                {/* Si estamos editando este chat, mostramos un input, si no, mostramos el título */}
+                {editandoId === chat.id ? (
+                  <input
+                    type="text"
+                    value={tituloEditado}
+                    onChange={(e) => setTituloEditado(e.target.value)}
+                    onBlur={() => guardarEdicion(chat.id)} // Guarda los cambios al clicear fuera del input
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && guardarEdicion(chat.id)
+                    }
+                    autoFocus
+                    className="edit-chat-input"
+                  />
+                ) : (
+                  <span className="chat-item-title">{chat.titulo}</span> //span solo contiene el nombre del chat
+                )}
 
-              <div className="chat-item-actions">
-                <button
-                  className="action-btn"
-                  title="Renombrar"
-                  onClick={(e) => {
-                    e.stopPropagation(); // Evita que se propague el evento al div padre y se seleccione el chat
-                    setEditandoId(chat.id);
-                    setTituloEditado(chat.titulo); // guardo el titulo actual en el input
-                  }}
-                >
-                  ✏️
-                </button>
-                <button
-                  className="action-btn"
-                  title="Eliminar"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    eliminarChat(chat.id);
-                  }}
-                >
-                  🗑️
-                </button>
+                <div className="chat-item-actions">
+                  <button
+                    className="action-btn"
+                    title="Renombrar"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Evita que se propague el evento al div padre y se seleccione el chat
+                      setEditandoId(chat.id);
+                      setTituloEditado(chat.titulo); // guardo el titulo actual en el input
+                    }}
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    className="action-btn"
+                    title="Eliminar"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      eliminarChat(chat.id);
+                    }}
+                  >
+                    🗑️
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     </>

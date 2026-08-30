@@ -407,16 +407,26 @@ export default function HistoriasPage() {
       <div
         className={`sidebar historias-sidebar ${isMobileOpen ? "open" : ""}`}
       >
-        <Link to="/" className="link-reset">
-          <button className="new-chat-btn btn-back btn-full">
-            ⬅ Volver al Chat
-          </button>
-        </Link>
-        <Link to="/fonetica" className="link-reset">
-          <button className="new-chat-btn btn-fonetica btn-full mb-0">
-            🗣️ Fonética
-          </button>
-        </Link>
+        <div className="sidebar-actions">
+          <Link to="/" className="sidebar-link">
+            <button className="new-chat-btn btn-compact btn-back">
+              💬 Volver al Chat
+            </button>
+          </Link>
+          <Link to="/historias" className="sidebar-link">
+            <button className="new-chat-btn btn-compact btn-historias">
+              📚 Historias IA
+            </button>
+          </Link>
+          <Link to="/fonetica" className="sidebar-link">
+            <button className="new-chat-btn btn-compact btn-fonetica">
+              🗣️ Fonética
+            </button>
+          </Link>
+          <Link to="/cloze" className="sidebar-link">
+            <button className="new-chat-btn btn-compact">🧩 Ejercicios</button>
+          </Link>
+        </div>
 
         <h3 className="sidebar-section-title mt-20">Generar Historia</h3>
         <div className="story-form">
