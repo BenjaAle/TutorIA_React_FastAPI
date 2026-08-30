@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles  # Para que la web lea estaticos js 
 
 # pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
-from routers import chats, anki, historias, fonetica, vocabulario, ejercicios
+from routers import chats, anki, historias, fonetica, vocabulario, ejercicios, roadmap
 
 # Inicializar Firebase Admin
 cred = credentials.Certificate("credenciales_firebase.json")
@@ -101,6 +101,15 @@ def iniciar_bd():
                  palabra_oculta TEXT DEFAULT '')"""
     )
 
+    # Tabla para el progreso de la ruta de aprendizaje
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS progreso_roadmap (
+                 id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                 user_id TEXT, 
+                 node_id TEXT, 
+                 status TEXT DEFAULT 'completed')"""
+    )
+
     conn.commit()
     conn.close()
 
@@ -133,3 +142,4 @@ app.include_router(historias.router)
 app.include_router(fonetica.router)
 app.include_router(vocabulario.router)
 app.include_router(ejercicios.router)
+app.include_router(roadmap.router)
