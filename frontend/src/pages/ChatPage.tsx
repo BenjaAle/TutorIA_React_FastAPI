@@ -1,4 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { Loader2 } from "lucide-react";
 import ModalAnki, { type CartaAnki } from "../components/ModalAnki";
 
 // Los mensajes tienen un rol y un texto
@@ -249,7 +250,13 @@ export default function ChatPage({ selectedChatId }: ChatPageProps) {
           onClick={extraerAAnki}
           disabled={cargandoAnki}
         >
-          {cargandoAnki ? "⏳ Analizando chat..." : "Extraer a Anki"}
+          {cargandoAnki ? (
+            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Loader2 size={16} /> Analizando chat...
+            </span>
+          ) : (
+            "Extraer a Anki"
+          )}
         </button>
       </div>
 

@@ -55,7 +55,7 @@ import { Login } from "./components/Login";
 // Interceptar fetch GLOBAL para enviar token en Headers siempre
 const originalFetch = window.fetch;
 window.fetch = async (...args) => {
-  const [resource, config] = args;
+  const [_, config] = args;
   const token = await auth.currentUser?.getIdToken();
   if (token) {
     if (config) {

@@ -1,4 +1,17 @@
 import { useState, useEffect } from "react";
+import {
+  Loader2,
+  Sparkles,
+  Puzzle,
+  BookOpen,
+  Trash2,
+  Lightbulb,
+  Check,
+  PartyPopper,
+  Volume2,
+  Brain,
+  ArrowRight,
+} from "lucide-react";
 import "../styles/style.css";
 import ModalAnki, { type CartaAnki } from "../components/ModalAnki";
 
@@ -73,7 +86,10 @@ export default function ClozePage() {
 
     wordsToHide = wordsToHide.filter((w) => w.length > 0);
     if (wordsToHide.length === 0)
-      return { tokens: [{ type: "text", val: frase }], answerMap: {} };
+      return {
+        tokens: [{ type: "text", val: frase }],
+        answerMap: {} as Record<number, string>,
+      };
 
     // 3. Crear regex mágico de palabra completa (escapando caracteres especiales para no romper JS)
     const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -317,17 +333,45 @@ export default function ClozePage() {
           opacity: generando ? 0.7 : 1,
         }}
       >
-        {generando
-          ? "⏳ Analizando chats y creando..."
-          : "✨ Generar ejercicios con IA"}
+        {generando ? (
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              justifyContent: "center",
+            }}
+          >
+            <Loader2 size={16} /> Analizando chats y creando...
+          </span>
+        ) : (
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              justifyContent: "center",
+            }}
+          >
+            <Sparkles size={16} /> Generar ejercicios con IA
+          </span>
+        )}
       </button>
     </div>
   );
 
   const headerTabs = (
     <>
-      <h2 style={{ color: "black", marginBottom: "0.5rem" }}>
-        🧩 Práctica de Cloze
+      <h2
+        style={{
+          color: "black",
+          marginBottom: "0.5rem",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+        }}
+      >
+        <Puzzle size={24} /> Práctica de Cloze
       </h2>
       <p style={{ marginBottom: "1.5rem", color: "#666" }}>
         Completa la palabra faltante según el contexto de la traducción en
@@ -348,7 +392,9 @@ export default function ClozePage() {
             transition: "0.2s",
           }}
         >
-          📚 Tarjetas Anki
+          <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <BookOpen size={16} /> Tarjetas Anki
+          </span>
         </button>
         <button
           onClick={() => setOrigenSel("ia")}
@@ -364,7 +410,9 @@ export default function ClozePage() {
             transition: "0.2s",
           }}
         >
-          ✨ Ejercicios IA
+          <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Sparkles size={16} /> Ejercicios IA
+          </span>
         </button>
       </div>
     </>
@@ -445,7 +493,7 @@ export default function ClozePage() {
                 onMouseOver={(e) => (e.currentTarget.style.opacity = "1")}
                 onMouseOut={(e) => (e.currentTarget.style.opacity = "0.6")}
               >
-                🗑️
+                <Trash2 size={24} />
               </button>
             </div>
 
@@ -482,13 +530,13 @@ export default function ClozePage() {
                   return (
                     <input
                       key={i}
-                      id={`cloze-input-${tok.id}`}
+                      id={`cloze-input-${(tok as any).id}`}
                       type="text"
-                      value={userInputs[tok.id] || ""}
+                      value={userInputs[(tok as any).id] || ""}
                       onChange={(e) =>
                         setUserInputs({
                           ...userInputs,
-                          [tok.id]: e.target.value,
+                          [(tok as any).id]: e.target.value,
                         })
                       }
                       onKeyDown={(e) => {
@@ -503,7 +551,7 @@ export default function ClozePage() {
                         margin: "0 8px",
                         borderRadius: "8px",
                         border: `2px solid ${
-                          wrongIds.includes(tok.id) ? "red" : "#555"
+                          wrongIds.includes((tok as any).id) ? "red" : "#555"
                         }`,
                         background: "#333",
                         color: "white",
@@ -513,7 +561,7 @@ export default function ClozePage() {
                         outline: "none",
                         transition: "border-color 0.3s ease",
                       }}
-                      autoFocus={tok.id === 0}
+                      autoFocus={(tok as any).id === 0}
                     />
                   );
                 }
@@ -539,7 +587,15 @@ export default function ClozePage() {
                     background: "#444",
                   }}
                 >
-                  💡 Pista
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <Lightbulb size={16} /> Pista
+                  </span>
                 </button>
                 <button
                   onClick={handleComprobar}
@@ -550,7 +606,15 @@ export default function ClozePage() {
                     marginLeft: "auto",
                   }}
                 >
-                  ✅ Comprobar
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <Check size={16} /> Comprobar
+                  </span>
                 </button>
               </div>
             )}
@@ -572,14 +636,22 @@ export default function ClozePage() {
                     flexGrow: 1,
                   }}
                 >
-                  ¡Acertaste! 🎉
+                  ¡Acertaste! <PartyPopper size={20} />
                 </div>
                 <button
                   onClick={() => playAudio(currentOracion.ingles)}
                   className="new-chat-btn"
                   style={{ width: "auto", background: "#444" }}
                 >
-                  🔊 Escuchar
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <Volume2 size={16} /> Escuchar
+                  </span>
                 </button>
                 {origenSel === "ia" && (
                   <button
@@ -587,7 +659,15 @@ export default function ClozePage() {
                     className="new-chat-btn"
                     style={{ width: "auto", background: "#8E24AA" }}
                   >
-                    🧠 Guardar en Anki
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <Brain size={16} /> Guardar en Anki
+                    </span>
                   </button>
                 )}
                 <button
@@ -595,7 +675,15 @@ export default function ClozePage() {
                   className="new-chat-btn confirm"
                   style={{ marginLeft: "auto", width: "auto" }}
                 >
-                  Siguiente ➡️
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    Siguiente <ArrowRight size={16} />
+                  </span>
                 </button>
               </div>
             )}

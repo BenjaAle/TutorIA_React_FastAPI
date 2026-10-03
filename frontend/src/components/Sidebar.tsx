@@ -1,5 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom"; // link equivale a <a> pero sin recargar la página
+import {
+  MessageSquarePlus,
+  MessageSquare,
+  BookOpen,
+  Speech,
+  Puzzle,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 
 // Los chats tienen id y titulo
 interface Chat {
@@ -139,32 +148,32 @@ export default function Sidebar({
                     className="new-chat-btn btn-compact"
                     onClick={() => setMostrarFormulario(true)}
                   >
-                    + Nuevo Chat
+                    <MessageSquarePlus size={18} /> Nuevo Chat
                   </button>
                 </div>
               ) : (
                 <Link to="/" className="sidebar-link">
                   <button className="new-chat-btn btn-compact btn-back">
-                    💬 Volver al Chat
+                    <MessageSquare size={18} /> Volver al Chat
                   </button>
                 </Link>
               )}
               {/* Link reemplaza a las etiquetas <a> para navegar sin recargar la página */}
               <Link to="/historias" className="sidebar-link">
                 <button className="new-chat-btn btn-compact btn-historias">
-                  📚 Historias IA
+                  <BookOpen size={18} /> Historias IA
                 </button>
               </Link>
 
               <Link to="/fonetica" className="sidebar-link">
                 <button className="new-chat-btn btn-compact btn-fonetica">
-                  🗣️ Fonética
+                  <Speech size={18} /> Fonética
                 </button>
               </Link>
 
               <Link to="/cloze" className="sidebar-link">
                 <button className="new-chat-btn btn-compact">
-                  🧩 Ejercicios
+                  <Puzzle size={18} /> Ejercicios
                 </button>
               </Link>
             </>
@@ -248,7 +257,7 @@ export default function Sidebar({
                       setTituloEditado(chat.titulo); // guardo el titulo actual en el input
                     }}
                   >
-                    ✏️
+                    <Pencil size={14} />
                   </button>
                   <button
                     className="action-btn"
@@ -258,7 +267,7 @@ export default function Sidebar({
                       eliminarChat(chat.id);
                     }}
                   >
-                    🗑️
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </div>

@@ -1,5 +1,21 @@
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { Link } from "react-router-dom";
+import {
+  MessageSquare,
+  BookOpen,
+  Speech,
+  Puzzle,
+  Pin,
+  PinOff,
+  Pencil,
+  Trash2,
+  Library,
+  Headphones,
+  Sparkles,
+  Loader2,
+  Play,
+  MoreVertical,
+} from "lucide-react";
 import ModalAnki, { type CartaAnki } from "../components/ModalAnki";
 import "../styles/historias.css";
 import KindleSelection from "../components/KindleSelection";
@@ -27,7 +43,7 @@ export default function HistoriasPage() {
   const [generando, setGenerando] = useState(false);
   const [historiaActiva, setHistoriaActiva] = useState<number | null>(null);
   const [historiaTitulo, setHistoriaTitulo] = useState(
-    "📚 Reproductor de Historias",
+    " Reproductor de Historias",
   );
 
   // Mobile toggle state
@@ -131,7 +147,7 @@ export default function HistoriasPage() {
     if (!tema.trim()) return alert("Escribe un tema para la historia.");
     setGenerando(true);
     setLineas([]);
-    setHistoriaTitulo("📚 Generando historia...");
+    setHistoriaTitulo("Generando historia...");
 
     try {
       const res = await fetch("/generar_historia", {
@@ -142,13 +158,13 @@ export default function HistoriasPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
-      setHistoriaTitulo(`📚 ${data.titulo}`);
+      setHistoriaTitulo(`${data.titulo}`);
       await cargarHistoria(data.historia_id);
       cargarListaHistorias();
       setTema("");
     } catch (err: any) {
       alert("Error: " + err.message);
-      setHistoriaTitulo("📚 Reproductor de Historias");
+      setHistoriaTitulo("Reproductor de Historias");
     } finally {
       setGenerando(false);
     }
@@ -162,7 +178,7 @@ export default function HistoriasPage() {
       if (historiaActiva === id) {
         setHistoriaActiva(null);
         setLineas([]);
-        setHistoriaTitulo("📚 Reproductor de Historias");
+        setHistoriaTitulo("Reproductor de Historias");
         setIndiceAudio(-1);
       }
     }
@@ -181,7 +197,7 @@ export default function HistoriasPage() {
         body: JSON.stringify({ titulo: nuevoTitulo }),
       });
       cargarListaHistorias();
-      if (historiaActiva === id) setHistoriaTitulo(`📚 ${nuevoTitulo}`);
+      if (historiaActiva === id) setHistoriaTitulo(`${nuevoTitulo}`);
     } catch (e) {
       console.error(e);
     }
@@ -219,7 +235,7 @@ export default function HistoriasPage() {
     setIndiceAudio(-1);
 
     const h = listaHistorias.find((hi) => hi.id === id);
-    if (h) setHistoriaTitulo(`📚 ${h.titulo}`);
+    if (h) setHistoriaTitulo(`${h.titulo}`);
 
     try {
       const res = await fetch(`/api/historias/${id}`);
@@ -227,7 +243,7 @@ export default function HistoriasPage() {
         const data = await res.json();
         setLineas(data.lineas);
         if (!h && data.titulo) {
-          setHistoriaTitulo(`📚 ${data.titulo}`);
+          setHistoriaTitulo(`${data.titulo}`);
         }
       }
     } catch (e) {
@@ -410,21 +426,23 @@ export default function HistoriasPage() {
         <div className="sidebar-actions">
           <Link to="/" className="sidebar-link">
             <button className="new-chat-btn btn-compact btn-back">
-              💬 Volver al Chat
+              <MessageSquare size={18} /> Volver al Chat
             </button>
           </Link>
           <Link to="/historias" className="sidebar-link">
             <button className="new-chat-btn btn-compact btn-historias">
-              📚 Historias IA
+              <BookOpen size={18} /> Historias IA
             </button>
           </Link>
           <Link to="/fonetica" className="sidebar-link">
             <button className="new-chat-btn btn-compact btn-fonetica">
-              🗣️ Fonética
+              <Speech size={18} /> Fonética
             </button>
           </Link>
           <Link to="/cloze" className="sidebar-link">
-            <button className="new-chat-btn btn-compact">🧩 Ejercicios</button>
+            <button className="new-chat-btn btn-compact">
+              <Puzzle size={18} /> Ejercicios
+            </button>
           </Link>
         </div>
 
@@ -460,14 +478,23 @@ export default function HistoriasPage() {
             onClick={generarHistoria}
             disabled={generando}
           >
-            {generando
-              ? "⏳ Escribiendo y grabando..."
-              : "✨ Generar y Crear Audios"}
+            {generando ? (
+              <>
+                <Loader2 size={18} /> Escribiendo y grabando...
+              </>
+            ) : (
+              <>
+                <Sparkles size={18} /> Generar y Crear Audios
+              </>
+            )}
           </button>
         </div>
 
-        <h3 className="sidebar-section-title library-title">
-          📖 Mi Biblioteca
+        <h3
+          className="sidebar-section-title library-title"
+          style={{ display: "flex", alignItems: "center", gap: "6px" }}
+        >
+          <Library size={18} /> Mi Biblioteca
         </h3>
         <div className="chat-list story-list">
           {listaHistorias.map((h) => (
@@ -498,7 +525,7 @@ export default function HistoriasPage() {
                     setIsMobileOpen(false);
                   }}
                 >
-                  {h.fijada && <span>📌</span>}
+                  {h.fijada && <Pin size={16} fill="currentColor" />}
                   {h.titulo}
                 </span>
               )}
@@ -517,7 +544,7 @@ export default function HistoriasPage() {
                         : "hidden",
                   }}
                 >
-                  ⋮
+                  <MoreVertical size={16} />
                 </button>
 
                 {menuActivoId === h.id && (
@@ -529,7 +556,7 @@ export default function HistoriasPage() {
                         fijarHistoria(h.id);
                       }}
                     >
-                      <span>{h.fijada ? "❌" : "📌"}</span>{" "}
+                      {h.fijada ? <PinOff size={14} /> : <Pin size={14} />}
                       {h.fijada ? "Desfijar" : "Fijar arriba"}
                     </button>
                     <button
@@ -541,7 +568,7 @@ export default function HistoriasPage() {
                         setMenuActivoId(null);
                       }}
                     >
-                      <span>✏️</span> Renombrar
+                      <Pencil size={14} /> Renombrar
                     </button>
                     <button
                       className="story-dropdown-item danger"
@@ -550,7 +577,7 @@ export default function HistoriasPage() {
                         eliminarHistoria(h.id, e);
                       }}
                     >
-                      <span>🗑️</span> Eliminar
+                      <Trash2 size={14} /> Eliminar
                     </button>
                   </div>
                 )}
@@ -580,7 +607,8 @@ export default function HistoriasPage() {
               </select>
               {indiceAudio === -1 && lineas.length > 0 && (
                 <button className="anki-btn" onClick={() => reproducirDesde(0)}>
-                  ▶ <span className="reproduce-text">Reproducir</span>
+                  <Play size={16} fill="currentColor" />{" "}
+                  <span className="reproduce-text">Reproducir</span>
                 </button>
               )}
             </div>
@@ -680,7 +708,9 @@ export default function HistoriasPage() {
                     display: modo === "escucha" ? "flex" : "none",
                   }}
                 >
-                  🎧 Escuchando audio...
+                  <>
+                    <Headphones size={20} /> Escuchando audio...
+                  </>
                 </div>
               </div>
             ))

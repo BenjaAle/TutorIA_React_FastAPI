@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Speech } from "lucide-react";
 import "../styles/fonetica.css"; // Ensure styles are bundled
 
 interface Fonema {
@@ -90,7 +91,12 @@ export default function FoneticaPage() {
     <div className="chat-container fonetica-chat-container">
       <div className="chat-box fonetica-chat-box">
         <div className="fonetica-header">
-          <h2 className="fonetica-header-title">🗣️ Laboratorio de Fonética</h2>
+          <h2
+            className="fonetica-header-title"
+            style={{ display: "flex", alignItems: "center", gap: "10px" }}
+          >
+            <Speech size={26} /> Laboratorio de Fonética
+          </h2>
         </div>
 
         {/* La Tabla Fonética */}
