@@ -28,9 +28,9 @@ def añadir_palabras(palabras):
                 "INSERT INTO vocabulario_anki (palabra) VALUES (?)", (palabra_limpia,)
             )
             añadidas += 1
-            print(f"✅ Añadida: '{palabra_limpia}'")
+            print(f"Añadida: '{palabra_limpia}'")
         else:
-            print(f"⚠️ Ignorada (ya existía): '{palabra_limpia}'")
+            print(f"Ignorada (ya existía): '{palabra_limpia}'")
 
     # 3. Guardar cambios
     conn.commit()
@@ -40,7 +40,7 @@ def añadir_palabras(palabras):
 
 
 if __name__ == "__main__":
-    print("--- Añadir Vocabulario Manualmente ---")
+    print("Añadir Vocabulario Manualmente.")
     print("Escribe las palabras que quieres añadir, separadas por COMAS.")
     print("Ejemplo: apple, beautiful, watermelon, go out")
     print("(Para cerrar el script, escribe 'salir')\n")

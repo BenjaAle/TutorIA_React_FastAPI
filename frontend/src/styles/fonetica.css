@@ -141,8 +141,8 @@
   font-style: italic;
 }
 
-/* Duolingo style button overrides */
-.card-fonema.duolingo-style {
+/* duo style button overrides */
+.card-fonema.duo-style {
   border-radius: 16px;
   border: 2px solid #e5e5e5;
   border-bottom: 4px solid #e5e5e5;
@@ -154,20 +154,20 @@
   transition: all 0.1s;
 }
 
-.card-fonema.duolingo-style:hover {
+.card-fonema.duo-style:hover {
   background: #f7f7f7;
   border-color: #d8d8d8;
   transform: none;
 }
 
-.card-fonema.duolingo-style:active {
+.card-fonema.duo-style:active {
   background: #f7f7f7;
   border-color: #d8d8d8;
   border-bottom: 2px solid #d8d8d8;
   transform: translateY(2px);
 }
 
-.card-fonema.duolingo-style .simbolo-fonema {
+.card-fonema.duo-style .simbolo-fonema {
   font-size: 44px;
   font-weight: 700;
   color: #3c3c3c;
@@ -188,7 +188,7 @@
   margin-left: 4px;
 }
 
-.card-fonema.duolingo-style .fonema-desc {
+.card-fonema.duo-style .fonema-desc {
   font-size: 12px;
   color: #9ca3af; /* A bit lighter text for the description */
   line-height: 1.3;

@@ -30,10 +30,9 @@ async def generar_audio(texto, ruta):
 
 
 async def inyectar_historia():
-    print("--- INYECTOR DE HISTORIAS MODO MANUAL ---")
 
     if not os.path.exists(JSON_PATH):
-        print(f"❌ Error fatal: No encontré el archivo '{JSON_PATH}'.")
+        print(f"Error: No encontré el archivo '{JSON_PATH}'.")
         print("Por favor crea el archivo JSON primero con tu historia.")
         return
 
@@ -42,7 +41,7 @@ async def inyectar_historia():
         try:
             datos = json.load(f)
         except json.JSONDecodeError:
-            print("❌ Error: Tu archivo JSON tiene un error de sintaxis.")
+            print("Error: Tu archivo JSON tiene un error de sintaxis.")
             return
 
     titulo = datos.get("titulo", "Historia Personalizada")
@@ -50,10 +49,10 @@ async def inyectar_historia():
     lineas = datos.get("lineas", [])
 
     if not lineas:
-        print("❌ Error: No encontré la propiedad 'lineas' en el JSON.")
+        print("Error: No encontré la propiedad 'lineas' en el JSON.")
         return
 
-    print(f"📘 Leyendo historia: '{titulo}'...")
+    print(f"Leyendo historia: '{titulo}'...")
 
     # 1. Base de Datos: Insertar historia principal
     conn = sqlite3.connect(DB_PATH)
@@ -70,7 +69,7 @@ async def inyectar_historia():
 
     # 3. Audio: Generar las tareas concurrentes
     tareas_audio = []
-    print(f"🔊 Generando {len(lineas)} audios simultáneamente (Edge TTS)...")
+    print(f"Generando {len(lineas)} audios simultáneamente...")
 
     for i, linea in enumerate(lineas):
         texto_en = linea.get("en", "").strip()
@@ -79,7 +78,7 @@ async def inyectar_historia():
         # Agregamos la tarea a la cola
         tareas_audio.append(generar_audio(texto_en, ruta_archivo))
 
-    # Ejecuta TODA la generación de audios de golpe y espera a que termine
+    # Ejecuta la generación de audios y espera a que termine
     if tareas_audio:
         await asyncio.gather(*tareas_audio)
 
@@ -89,7 +88,7 @@ async def inyectar_historia():
         oracion_es = linea.get("es", "").strip()
         oracion_ipa = linea.get("ipa", "").strip()  # Si no hay ipa, la deja vacía
 
-        # Guardamos la ruta estática para que FastAPI la sirva (ej: static/audios/historia_30/linea_1.mp3)
+        # Guardar la ruta estática para que FastAPI la sirva (ej: static/audios/historia_30/linea_1.mp3)
         ruta_db = f"{carpeta_historia_relativa}/linea_{i}.mp3"
 
         c.execute(
@@ -105,8 +104,7 @@ async def inyectar_historia():
     conn.commit()
     conn.close()
 
-    print(f"\n✅ ¡Éxito letal! '{titulo}' se ha inyectado con audio premium.")
-    print("Vuelve a React y recarga la página de Historias.")
+    print(f"\n '{titulo}' se ha inyectado con audio.")
 
 
 if __name__ == "__main__":

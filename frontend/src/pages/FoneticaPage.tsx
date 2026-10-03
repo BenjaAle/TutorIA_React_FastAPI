@@ -110,7 +110,7 @@ export default function FoneticaPage() {
             return (
               <div
                 key={f.id}
-                className="card-fonema duolingo-style"
+                className="card-fonema duo-style"
                 onClick={() => handleClickFonema(f)}
               >
                 <div className="simbolo-fonema">{f.simbolo}</div>

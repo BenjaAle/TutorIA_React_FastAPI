@@ -343,6 +343,19 @@
   ); /* Se oscurece un poco al pasar el mouse */
 }
 
+/* Scroll en barra lateral */
+.historias-sidebar {
+  overflow-y: auto;
+}
+
+/* Evitar que la lista de historias sea la única con scroll interno */
+.historias-sidebar .story-list {
+  flex: none !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+
 /* --- MOBILE PWA RESPONSIVENESS --- */
 @media screen and (max-width: 768px) {
   /* Elimincion de padding doble y fixes del titulo */
