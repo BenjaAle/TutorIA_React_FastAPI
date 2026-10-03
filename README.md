@@ -6,12 +6,12 @@ Aplicación web impulsada por IA (Google Gemini) diseñada para el aprendizaje d
 
 ## Características Principales
 
-- 💬 **Chat Tutor Inteligente:** Práctica conversacional libre en inglés impulsada por Gemini Flash, con un historial de chats manejado localmente.
-- 📚 **Historias Autogeneradas (Lectura e Inmersión):** La IA crea historias personalizadas según tu nivel (A1 a C2) y temática solicitada. Incluye 3 modos de práctica: Comprensión, Adquisición e Inmersión.
-- 🗣️ **Laboratorio de Fonética:** Aprendizaje detallado de fonemas individuales (AFI) y discurso conectado (Connected Speech) con audios en calidad neuronal pregenerados mediante `edge-tts`.
+- 💬 **Chat como Tutor:** Práctica conversacional impulsada por Gemini Flash, con un historial de chats manejado localmente.
+- 📚 **Historias con temática:** La IA crea historias personalizadas según tu nivel (A1 a C2) y temática solicitada. Incluye 3 modos de práctica: Comprensión (audio + traducción), Adquisición (audio + formato IPA) e Inmersión (solo audio).
+- 🗣️ **Fonética:** Aprendizaje de fonemas individuales (IPA) y discurso conectado (Connected Speech) con audios pregenerados mediante `edge-tts`.
 - 🧩 **Ejercicios Cloze:** Relleno de espacios en blanco basados en flashcards generadas por el sistema.
-- 🧠 **Sincronización con Anki:** Si utilizas AnkiConnect, la aplicación inyecta automáticamente nuevas palabras y flashcards directamente a tu mazo local para repaso espaciado.
-- 🔗 **Autenticación Multi-usuario:** Acceso asegurado mediante Firebase Auth.
+- 🧠 **Sincronización con Anki:** Si utilizas AnkiConnect, la aplicación inyecta automáticamente nuevas palabras y flashcards con audio, imagenes, ejemplos, traducción y formato IPA, directamente a tu mazo local para repaso espaciado.
+- 🔗 **Autenticación Multi-usuario:** Acceso mediante Firebase Auth.
 
 ---
 
@@ -28,7 +28,7 @@ Aplicación web impulsada por IA (Google Gemini) diseñada para el aprendizaje d
 
 - Python 3 + FastAPI
 - Google GenAI SDK (Gemini AI)
-- SQLite (Base de datos local)
+- SQLite
 - Firebase Admin (Autenticación)
 - Edge-TTS (Voces Neurales)
 
@@ -41,8 +41,8 @@ Sigue estos pasos para levantar el entorno de desarrollo en tu máquina local.
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/TU-USUARIO/TU-REPOSITORIO.git
-cd TU-REPOSITORIO
+git clone https://github.com/BenjaAle/TutorIA_React_FastAPI.git
+cd TutorIA_React_FastAPI
 ```
 
 ### 2. Configurar el Backend (FastAPI)
@@ -51,25 +51,36 @@ Abre una terminal en la carpeta `/backend`:
 
 ```bash
 cd backend
+```
 
-# Crear entorno virtual (Recomendado)
+Crear ambiente virtual
+
+```bash
 python -m venv venv
+```
 
-# Activar el entorno virtual (En Windows)
+Activar ambiente virtual
+
+```bash
+# En Windows:
 venv\Scripts\activate
-# (En Mac/Linux usa: source venv/bin/activate)
 
-# Instalar dependencias requeridas (asegúrate de tener requirements.txt si no instálalas manual)
-pip install fastapi uvicorn google-genai edge-tts firebase-admin python-dotenv
+# En Mac/Linux:
+source venv/bin/activate
+```
+
+Instalar dependencias
+```bash
+pip install requeriments.txt
 ```
 
 #### Variables de Entorno y Credenciales
 
-Dentro de la carpeta `backend/`, crea un archivo llamado `.env` e inserta tus API Keys necesarias:
+Dentro de la carpeta `backend/`, crea un archivo llamado `.env` e inserta tus API Keys:
 
 ```env
 GEMINI_API_KEY=tu_api_key_de_google_ai_studio
-PEXELS_API_KEY=tu_api_key_de_pexels_opcional
+PEXELS_API_KEY=tu_api_key_de_pexels
 ```
 
 Además, necesitas el archivo de credenciales de servicio de tu proyecto en Firebase. Descárgalo desde la consola de Firebase y guárdalo en la carpeta `backend/` con el nombre exacto de: `credenciales_firebase.json`.
@@ -80,7 +91,7 @@ Además, necesitas el archivo de credenciales de servicio de tu proyecto en Fire
 uvicorn main:app --reload
 ```
 
-El servidor backend estará corriendo en `http://localhost:8000`. Cuentas con swagger automático en `http://localhost:8000/docs`.
+El servidor backend estará corriendo en `http://localhost:8000`. 
 
 ### 3. Configurar el Frontend (React)
 
@@ -98,7 +109,7 @@ npm run dev
 
 La aplicación web estará corriendo en `http://localhost:5173`.
 
-### 4. Configurar Anki (Opcional pero Recomendado)
+### 4. Configurar Anki
 
 Si quieres extraer vocabulario y que se guarde en Anki:
 
@@ -109,24 +120,5 @@ Si quieres extraer vocabulario y que se guarde en Anki:
 
 ---
 
-## 📝 Scripts Útiles
 
-Si realizas un cambio en los ejemplos fonéticos en el backend y deseas regenerar los archivos `.mp3` para las tarjetas del Laboratorio de Fonética, simplemente ejecuta en el backend:
-
-```bash
-python generate_phonemes_audio.py
-```
-
-## 🤝 Contribuir
-
-Las contribuciones o ideas para mejorar la UI/UX y la lógica base de las clases de IA son súper bienvenidas. Si deseas contribuir:
-
-1. Haz un Fork del proyecto.
-2. Crea tu rama (`git checkout -b feature/NuevaMecanica`).
-3. Haz un commit de tus cambios (`git commit -m 'Agregar nueva funcionalidad'`).
-4. Haz push a la rama (`git push origin feature/NuevaMecanica`).
-5. Abre un Pull Request.
-
----
-
-_Hecho por [Tu Nombre] - ¡Happy Learning!_ 🚀
+Hecho por Benjamín - ¡Happy Learning!

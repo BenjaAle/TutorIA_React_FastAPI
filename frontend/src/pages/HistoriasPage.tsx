@@ -15,6 +15,7 @@ import {
   Loader2,
   Play,
   MoreVertical,
+  BookAudio,
 } from "lucide-react";
 import ModalAnki, { type CartaAnki } from "../components/ModalAnki";
 import "../styles/historias.css";
@@ -590,7 +591,12 @@ export default function HistoriasPage() {
       <div className="chat-container historias-chat-container">
         <div className="header historias-header">
           <div className="historias-header-row">
-            <h2 className="historias-header-title">{historiaTitulo}</h2>
+            <h2
+              className="historias-header-title"
+              style={{ display: "flex", alignItems: "center", gap: "10px" }}
+            >
+              <BookAudio size={26} /> {historiaTitulo}
+            </h2>
             <div className="historias-header-actions">
               {cargandoAnki && (
                 <span className="story-loading-text">⏳ Cargando Anki...</span>

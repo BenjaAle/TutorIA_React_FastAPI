@@ -95,7 +95,7 @@ export default function FoneticaPage() {
             className="fonetica-header-title"
             style={{ display: "flex", alignItems: "center", gap: "10px" }}
           >
-            <Speech size={26} /> Laboratorio de Fonética
+            <Speech size={26} /> Fonética
           </h2>
         </div>
 
